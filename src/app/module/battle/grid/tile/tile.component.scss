@@ -1,0 +1,29 @@
+:host {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  background: #eaeaea;
+
+  &:nth-child(odd) {
+    background: #dadada;
+  }
+}
+
+.character {
+  display: grid;
+  place-items: center;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: white;
+}
+
+.player {
+  background: #0969da;
+}
+
+.enemy {
+  background: #d1242f;
+}

@@ -1,0 +1,15 @@
+<nou-character-display
+        [character]="enemy()"
+        [isTurn]="!isPlayerTurn()"
+        [round]="round()"
+/>
+<nou-grid
+        [tiles]="tiles"
+        [characters]="characters()"
+/>
+<nou-character-display
+        [character]="player()"
+        [isTurn]="isPlayerTurn()"
+        [round]="round()"
+/>
+<nou-countdown [currentStep]="turnTimeRemaining() - 1" [totalSteps]="6 - 1" [theme]="isPlayerTurn() ? 'blue' : 'red'"/>

@@ -1,0 +1,6 @@
+@for (tile of tiles(); track tile.x + ':' + tile.y) {
+    <nou-tile
+            [tile]="tile"
+            [character]="characterAt(tile)"
+    />
+}
