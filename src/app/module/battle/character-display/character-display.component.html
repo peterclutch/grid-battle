@@ -6,22 +6,12 @@
             [style.--indicator-offset]="nextSlotOffset()"
             aria-hidden="true"
     ></div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(0)" [class.red]="character().team === 'red'">
-        <div>1</div>
-        <div>{{ character().slot1?.name ?? 'Empty' }}</div>
-    </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(1)" [class.red]="character().team === 'red'">
-        <div>2</div>
-        <div>{{ character().slot2?.name ?? 'Empty' }}</div>
-    </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(2)" [class.red]="character().team === 'red'">
-        <div>3</div>
-        <div>{{ character().slot3?.name ?? 'Empty' }}</div>
-    </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(3)" [class.red]="character().team === 'red'">
-        <div>4</div>
-        <div>{{ character().slot4?.name ?? 'Empty' }}</div>
-    </div>
+    @for (slot of character().slots; track $index) {
+        <div class="slot" [class.turn]="isTurn()" [class.next]="isNext($index)" [class.red]="character().team === 'red'">
+            <div>{{ $index + 1 }}</div>
+            <div>{{ slot?.name ?? 'Empty' }}</div>
+        </div>
+    }
 </div>
 <div class="info">
     <div class="stats">

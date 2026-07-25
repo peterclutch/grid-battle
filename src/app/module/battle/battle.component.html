@@ -1,7 +1,7 @@
 <nou-character-display
         [character]="store.redPlayer()"
         [isTurn]="store.state().activeTeam === 'red'"
-        [round]="store.state().turn"
+        [turn]="store.state().turn"
 />
 <nou-grid
         [width]="store.state().width"
@@ -12,7 +12,7 @@
 <nou-character-display
         [character]="store.bluePlayer()"
         [isTurn]="store.state().activeTeam === 'blue'"
-        [round]="store.state().turn"
+        [turn]="store.state().turn"
 />
 <!--<nou-countdown-->
 <!--        [currentStep]="store.state().turnTimeRemaining() - 1"-->

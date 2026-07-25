@@ -63,10 +63,7 @@ export class BattleStore {
                     tags: new Set<Tag>(['blocking', 'mortal']),
                     hp: 3,
                     team: 'blue',
-                    slot1: MoveAction,
-                    slot2: PunchAction,
-                    slot3: MoveAction,
-                    slot4: FireballAction,
+                    slots: [MoveAction, PunchAction, MoveAction, FireballAction],
                 },
             ],
             [
@@ -78,10 +75,7 @@ export class BattleStore {
                     tags: new Set<Tag>(['blocking', 'mortal', 'damaging']),
                     hp: 3,
                     team: 'red',
-                    slot1: MoveAction,
-                    slot2: PunchAction,
-                    slot3: MoveAction,
-                    slot4: FireballAction,
+                    slots: [MoveAction, PunchAction, MoveAction, FireballAction],
                 },
             ],
         ]);

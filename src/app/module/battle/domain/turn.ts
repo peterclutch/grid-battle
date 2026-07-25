@@ -24,7 +24,7 @@ export function runTurn(currentState: GameState, cmd: Command): { state: GameSta
     // step(upkeepEffects(state), 'upkeep');
 
     return {
-        state: { ...state, turn: state.activeTeam === 'blue' ? state.turn : state.turn + 1, activeTeam: state.activeTeam === 'blue' ? 'red' : 'blue' },
+        state: { ...state, turn: state.turn + 1, activeTeam: state.activeTeam === 'blue' ? 'red' : 'blue' },
         log,
     };
 }

@@ -7,22 +7,22 @@ export interface Action {
     readonly inputKind: Command['kind'];
 }
 
-export function findActiveAction(state: GameState): Action | null {
-    const character = findActiveCharacter(state);
-    return findAction(character, state.turn);
+// single source of truth for "which slot is a team about to use". Blue always goes
+// first, so blue lands on even turn numbers and red on odd ones — that parity is
+// enough to recover how many actions each side has completed so far, without
+// storing a separate counter per character.
+export function activeSlotIndex(team: 'blue' | 'red', turn: number): number {
+    const actionsCompleted = team === 'blue' ? Math.ceil(turn / 2) : Math.floor(turn / 2);
+    return actionsCompleted % 4;
 }
 
-function findAction(character: Character, turn: number): Action | null {
-    switch (turn % 4) {
-        case 0:
-            return character.slot1;
-        case 1:
-            return character.slot2;
-        case 2:
-            return character.slot3;
-        default:
-            return character.slot4;
-    }
+export function getSlot(character: Character, index: number): Action | null {
+    return character.slots[index] ?? null;
+}
+
+export function findActiveAction(state: GameState): Action | null {
+    const character = findActiveCharacter(state);
+    return getSlot(character, activeSlotIndex(character.team, state.turn));
 }
 
 export const MoveAction: Action = {

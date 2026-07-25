@@ -45,14 +45,13 @@ export interface Object extends EntityBase {
     readonly kind: 'object';
 }
 
+export type Slots = readonly [Action | null, Action | null, Action | null, Action | null];
+
 export interface Character extends EntityBase {
     readonly kind: 'character';
     readonly team: 'blue' | 'red';
     readonly hp: number;
-    readonly slot1: Action | null;
-    readonly slot2: Action | null;
-    readonly slot3: Action | null;
-    readonly slot4: Action | null;
+    readonly slots: Slots;
 }
 
 export interface GameState {
