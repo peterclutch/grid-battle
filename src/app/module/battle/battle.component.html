@@ -1,19 +1,19 @@
-<nou-character-display
-        [character]="battle.enemy()"
-        [isTurn]="!battle.isPlayerTurn()"
-        [round]="battle.round()"
-/>
-<nou-grid
-        [tiles]="battle.tiles()"
-        [entities]="battle.entities()"
-/>
-<nou-character-display
-        [character]="battle.player()"
-        [isTurn]="battle.isPlayerTurn()"
-        [round]="battle.round()"
-/>
-<nou-countdown
-        [currentStep]="battle.turnTimeRemaining() - 1"
-        [totalSteps]="5"
-        [theme]="battle.isPlayerTurn() ? 'blue' : 'red'"
-/>
+<!--<nou-character-display-->
+<!--        [character]="battle.enemy()"-->
+<!--        [isTurn]="!battle.isPlayerTurn()"-->
+<!--        [round]="battle.round()"-->
+<!--/>-->
+<!--<nou-grid-->
+<!--        [tiles]="battle.tiles()"-->
+<!--        [entities]="battle.entities()"-->
+<!--/>-->
+<!--<nou-character-display-->
+<!--        [character]="battle.player()"-->
+<!--        [isTurn]="battle.isPlayerTurn()"-->
+<!--        [round]="battle.round()"-->
+<!--/>-->
+<!--<nou-countdown-->
+<!--        [currentStep]="battle.turnTimeRemaining() - 1"-->
+<!--        [totalSteps]="5"-->
+<!--        [theme]="battle.isPlayerTurn() ? 'blue' : 'red'"-->
+<!--/>-->

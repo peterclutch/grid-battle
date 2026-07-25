@@ -1,4 +1,4 @@
-import { GameInput } from './input.model';
+import { GameInput } from '../../../shared/model/input.model';
 
 export interface Action {
     readonly name: string;

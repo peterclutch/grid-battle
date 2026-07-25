@@ -2,7 +2,7 @@ import { computed, Service, signal } from '@angular/core';
 import { Dir, Entity, EntityId, entityId, GameState, Tag } from '../domain/types';
 import { spatialIndex } from '../domain/grid';
 import { probeMove } from '../domain/movement';
-import { FireballAction, MoveAction, PunchAction } from '../../../shared/model/action.model';
+import { FireballAction, MoveAction, PunchAction } from '../domain/action.model';
 import { Command, runTurn } from '../domain/turn';
 
 @Service()

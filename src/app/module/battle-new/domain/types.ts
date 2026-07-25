@@ -1,4 +1,4 @@
-import { Action } from '../../../shared/model/action.model';
+import { Action } from './action.model';
 
 export type EntityId = string & { readonly __brand: unique symbol };
 export function entityId(value: string): EntityId {
