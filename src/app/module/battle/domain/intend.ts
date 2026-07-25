@@ -4,7 +4,7 @@ import { commitMove, probeMove } from './movement';
 import { classify } from './interactions';
 import { spatialIndex } from './grid';
 
-export type Effect =
+export type Intend =
     | { kind: 'move'; target: EntityId; dir: Dir; cause?: EntityId }
     | { kind: 'damage'; target: EntityId; amount: number; cause?: EntityId }
     | { kind: 'destroy'; target: EntityId; cause?: EntityId }
@@ -12,10 +12,10 @@ export type Effect =
 
 const MAX_STEPS = 10_000;
 
-export function runCascade(s0: GameState, seed: Effect[]): { state: GameState; log: GameEvent[] } {
+export function runCascade(s0: GameState, seed: Intend[]): { state: GameState; log: GameEvent[] } {
     let state = s0;
     const log: GameEvent[] = [];
-    const queue: Effect[] = [...seed];
+    const queue: Intend[] = [...seed];
     let guard = 0;
 
     while (queue.length) {
@@ -23,13 +23,13 @@ export function runCascade(s0: GameState, seed: Effect[]): { state: GameState; l
             throw new Error('cascade overflow — check your rules for a loop');
         }
 
-        const eff = queue.shift()!; // FIFO = breadth-first, feels simultaneous
-        const target = eff.kind === 'spawn' ? undefined : state.entities.get(eff.target);
+        const intend = queue.shift()!; // FIFO = breadth-first, feels simultaneous
+        const target = intend.kind === 'spawn' ? undefined : state.entities.get(intend.target);
         if (target?.dead) {
             continue;
         } // always re-read by id; never hold stale refs
 
-        const r = applyEffect(state, eff);
+        const r = applyIntend(state, intend);
         state = r.state;
         log.push(...r.events);
         queue.push(...r.followUps);
@@ -41,50 +41,50 @@ export function runCascade(s0: GameState, seed: Effect[]): { state: GameState; l
     return { state: sweepDead(state), log };
 }
 
-function applyEffect(s: GameState, eff: Effect): { state: GameState; events: GameEvent[]; followUps: Effect[] } {
-    switch (eff.kind) {
+function applyIntend(s: GameState, intend: Intend): { state: GameState; events: GameEvent[]; followUps: Intend[] } {
+    switch (intend.kind) {
         case 'move': {
-            const r = probeMove(s, eff.target, eff.dir);
+            const r = probeMove(s, intend.target, intend.dir);
             if (!r.ok) {
-                const e = s.entities.get(eff.target)!;
+                const e = s.entities.get(intend.target)!;
                 // a projectile that can't advance dies; a rock just stops
-                const followUps: Effect[] = e.tags.has('ephemeral') ? [{ kind: 'destroy', target: e.id }] : [];
-                return { state: s, events: [{ type: 'blocked', id: eff.target, reason: r.reason }], followUps };
+                const followUps: Intend[] = e.tags.has('ephemeral') ? [{ kind: 'destroy', target: e.id }] : [];
+                return { state: s, events: [{ type: 'blocked', id: intend.target, reason: r.reason }], followUps };
             }
-            const c = commitMove(s, r.chain, eff.dir);
-            return { state: c.state, events: c.events, followUps: r.effects };
+            const c = commitMove(s, r.chain, intend.dir);
+            return { state: c.state, events: c.events, followUps: r.intends };
         }
         case 'damage': {
-            const e = s.entities.get(eff.target)!;
-            const hp = (e.hp ?? 0) - eff.amount;
+            const e = s.entities.get(intend.target)!;
+            const hp = (e.hp ?? 0) - intend.amount;
             const state = { ...s, entities: new Map(s.entities).set(e.id, { ...e, hp }) };
             return {
                 state,
-                events: [{ type: 'damaged', id: e.id, amount: eff.amount, hp }],
-                followUps: hp <= 0 ? [{ kind: 'destroy', target: e.id, cause: eff.cause }] : [],
+                events: [{ type: 'damaged', id: e.id, amount: intend.amount, hp }],
+                followUps: hp <= 0 ? [{ kind: 'destroy', target: e.id, cause: intend.cause }] : [],
             };
         }
         case 'destroy': {
-            const e = s.entities.get(eff.target)!;
+            const e = s.entities.get(intend.target)!;
             const state = { ...s, entities: new Map(s.entities).set(e.id, { ...e, dead: true }) };
             return { state, events: [{ type: 'destroyed', id: e.id }], followUps: onDeath(e) };
         }
         case 'spawn': {
-            const state = { ...s, entities: new Map(s.entities).set(eff.entity.id, eff.entity) };
-            return { state, events: [{ type: 'spawned', id: eff.entity.id }], followUps: [] };
+            const state = { ...s, entities: new Map(s.entities).set(intend.entity.id, intend.entity) };
+            return { state, events: [{ type: 'spawned', id: intend.entity.id }], followUps: [] };
         }
     }
 }
 
-// hook for future death-triggered effects (drops, explosions, etc.) — none yet
-function onDeath(_e: Entity): Effect[] {
+// hook for future death-triggered intends (drops, explosions, etc.) — none yet
+function onDeath(_e: Entity): Intend[] {
     return [];
 }
 
 // a cascade step can leave two illegal things sharing a cell (e.g. a spawn landing on
 // an occupant); resolve those before the next step so invariants hold between phases
-function detectOverlaps(s: GameState): Effect[] {
-    const effects: Effect[] = [];
+function detectOverlaps(s: GameState): Intend[] {
+    const intends: Intend[] = [];
     for (const occupants of spatialIndex(s).values()) {
         if (occupants.length < 2) continue;
         for (let i = 0; i < occupants.length; i++) {
@@ -92,11 +92,11 @@ function detectOverlaps(s: GameState): Effect[] {
                 const a = occupants[i], b = occupants[j];
                 if (a.dead || b.dead) continue;
                 if (classify(a, b).type === 'pass') continue;
-                effects.push({ kind: 'destroy', target: b.id, cause: a.id });
+                intends.push({ kind: 'destroy', target: b.id, cause: a.id });
             }
         }
     }
-    return effects;
+    return intends;
 }
 
 function sweepDead(s: GameState): GameState {

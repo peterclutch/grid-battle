@@ -11,8 +11,6 @@ const redId = entityId('red-player');
 @Injectable({ providedIn: 'root' })
 export class BattleStore {
 
-    // private readonly animator = inject(Animator);
-
     private readonly _state = signal<GameState>(this.initialState());
     readonly state = this._state.asReadonly();
     
@@ -20,13 +18,6 @@ export class BattleStore {
     readonly tileEffectIndex = computed(() => tileEffectIndex(this._state()));
 
     readonly activeCharacter = computed(() => findActiveCharacter(this._state()));
-    // readonly busy = this.animator.playing;
-    // readonly canAct      = computed(() => !this.busy());
-
-    // readonly legalDirs = computed<Dir[]>(() => {
-    //     const s = this._state(), a = this.activeActor();
-    //     return (['N','S','E','W'] as Dir[]).filter(d => probeMove(s, a.id, d).ok);
-    // });
 
     // Players
     readonly bluePlayer = computed<Character>(() => {
@@ -48,7 +39,6 @@ export class BattleStore {
     dispatch(cmd: Command): void {
         const { state, log } = runTurn(this._state(), cmd);
         this._state.set(state);
-        // this.animator.play(log); // visuals catch up
     }
 
     private initialState(): GameState {
