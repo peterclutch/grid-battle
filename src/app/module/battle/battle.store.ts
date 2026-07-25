@@ -5,14 +5,28 @@ import {
     Service,
     signal,
 } from '@angular/core';
-import { Character, Enemy, Player } from '../../shared/model/character.model';
-import { GridEntity, NonCharacterEntity } from '../../shared/model/grid-entry.model';
-import { Direction, GameInput } from '../../shared/model/input.model';
 import { FireballAction, MoveAction, PunchAction } from '../../shared/model/action.model';
-import { getPosition, getSurroundingPositions } from '../../shared/model/position.model';
-import { findCharacterAt, findEntityAt, isInsideBoard } from './battle.rules';
+import { Character, Enemy, Player } from '../../shared/model/character.model';
+import { GameEvent } from '../../shared/model/event.model';
+import { GridEntity, isCharacter } from '../../shared/model/grid-entry.model';
+import { GameInput } from '../../shared/model/input.model';
+import { Intent } from '../../shared/model/intent.model';
+import { Position, positionKey } from '../../shared/model/position.model';
+import { Tile } from '../../shared/model/tile.model';
+import { applyEvents } from './battle.reducer';
+import { resolveIntent } from './battle.resolver';
+import { BOARD_HEIGHT, BOARD_WIDTH } from './battle.rules';
+import { computeTileEffects } from './battle.tile-effects';
 
-type CharacterChanges = Partial<Omit<Character, 'characterKind'>>;
+type PositionKey = `${number},${number}`;
+function coordinateKey(position: Position): PositionKey {
+    return `${position.x},${position.y}`;
+}
+// todo maybe store stuff here
+type EntityState = {
+    byId: ReadonlyMap<string, GridEntity>;
+    idsByPosition: ReadonlyMap<PositionKey, readonly string[]>;
+};
 
 @Service()
 export class BattleStore {
@@ -22,47 +36,49 @@ export class BattleStore {
     private turnTimer: ReturnType<typeof setInterval> | undefined;
     readonly turnTimeRemaining = signal(6);
 
-    readonly player = signal<Player>({
-        kind: 'character',
-        characterKind: 'player',
-        moveInto: 'immovable',
-        id: 'player',
-        position: { x: 2, y: 4 },
-        health: 3,
-        slot1: MoveAction,
-        slot2: PunchAction,
-        slot3: MoveAction,
-        slot4: FireballAction,
-    });
-    readonly enemy = signal<Enemy>({
-        kind: 'character',
-        characterKind: 'enemy',
-        moveInto: 'immovable',
-        id: 'enemy',
-        position: { x: 2, y: 1 },
-        health: 3,
-        slot1: MoveAction,
-        slot2: null,
-        slot3: MoveAction,
-        slot4: PunchAction,
-    });
-    readonly characters = computed<Character[]>(() => [
-        this.player(),
-        this.enemy(),
-    ]);
-    readonly spawnedEntities = signal<NonCharacterEntity[]>([
+    readonly entities = signal<GridEntity[]>([
         {
+            kind: 'character',
+            characterKind: 'player',
+            moveInto: 'immovable',
+            id: 'player',
+            position: { x: 2, y: 4 },
+            health: 3,
+            slot1: MoveAction,
+            slot2: PunchAction,
+            slot3: MoveAction,
+            slot4: FireballAction,
+        }, {
+            kind: 'character',
+            characterKind: 'enemy',
+            moveInto: 'immovable',
+            id: 'enemy',
+            position: { x: 2, y: 1 },
+            health: 3,
+            slot1: MoveAction,
+            slot2: null,
+            slot3: MoveAction,
+            slot4: PunchAction,
+        }, {
             kind: 'projectile',
             id: 'test1',
             moveInto: 'absorb',
             direction: 'down',
-            position: { x: 2, y: 0 },
+            position: { x: 1, y: 0 },
         },
     ]);
-    readonly gridEntities = computed<GridEntity[]>(() => [
-        ...this.characters(),
-        ...this.spawnedEntities(),
-    ]);
+
+    readonly player = computed<Player>(() =>
+        this.entities().find((entity): entity is Player =>
+            entity.kind === 'character' && entity.characterKind === 'player'
+        )!
+    );
+    readonly enemy = computed<Enemy>(() =>
+        this.entities().find((entity): entity is Enemy =>
+            entity.kind === 'character' && entity.characterKind === 'enemy'
+        )!
+    );
+    readonly characters = computed<Character[]>(() => this.entities().filter(isCharacter));
 
     readonly round = signal(1);
     readonly isPlayerTurn = signal(true);
@@ -80,6 +96,15 @@ export class BattleStore {
         return slots[(this.round() - 1) % slots.length];
     });
 
+    readonly tiles = computed<Tile[]>(() => {
+        const effects = computeTileEffects(this.activeCharacter(), this.activeAction(), this.entities());
+        return Array.from({ length: BOARD_WIDTH * BOARD_HEIGHT }, (_, index) => {
+            const x = index % BOARD_WIDTH;
+            const y = Math.floor(index / BOARD_WIDTH);
+            return { x, y, effect: effects.get(positionKey({ x, y })) ?? null };
+        });
+    });
+
     constructor() {
         this.destroyRef.onDestroy(() => this.stopTurnTimer());
     }
@@ -93,103 +118,60 @@ export class BattleStore {
 
     private executeAction(input: GameInput): boolean {
         const action = this.activeAction();
-        // if (!this.isPlayerTurn() || !action) {
-        //   return false;
-        // }
         if (!action) {
             return true; // todo
         }
         if (action.inputKind !== input.kind) {
             return false;
         }
-        switch (action?.type) {
+
+        const character = this.activeCharacter();
+        switch (action.type) {
             case 'movement':
-                if (input.kind !== 'direction') {
-                    return false;
-                }
-                return this.moveCharacter(this.activeCharacter(), input.direction);
+                return input.kind === 'direction'
+                    && this.applyIntent({ type: 'move', entityId: character.id, direction: input.direction });
             case 'attack':
-                if (input.kind !== 'tap') {
-                    return false;
-                }
-                return this.attack(this.activeCharacter());
+                return input.kind === 'tap'
+                    && this.applyIntent({ type: 'attack', entityId: character.id });
             case 'defense':
-                // todo
-                return true;
+                return true; // todo
             case 'spawn':
-                // todo
-                return true;
+                return input.kind === 'direction'
+                    && this.applyIntent({ type: 'spawn', entityId: character.id, direction: input.direction})
         }
     }
 
-    private attack(character: Character): boolean {
-        const positions = getSurroundingPositions(character.position);
-        positions.forEach((position) => {
-            const attackedCharacter = findCharacterAt(this.characters(), position);
-            if (attackedCharacter) {
-                const health = attackedCharacter.health;
-                this.updateCharacter(attackedCharacter, { health: health === 0 ? health : health - 1 });
-            }
-        });
-        return true;
-    }
-
-    private moveCharacter(character: Character, direction: Direction): boolean {
-        const position = getPosition(character.position, direction);
-        const entityAtPosition = findEntityAt(this.characters(), position);
-
-        // todo handle absorb etc.
-        if (!isInsideBoard(position) || entityAtPosition?.moveInto === 'immovable') {
+    private applyIntent(intent: Intent): boolean {
+        const events = resolveIntent(intent, this.entities());
+        // a move that goes nowhere doesn't cost the turn
+        if (intent.type === 'move' && events.length === 0) {
             return false;
         }
-        this.updateCharacter(character, { position }); // todo technically a side effect
+        this.commit(events);
         return true;
     }
 
-    private updateCharacter(character: Character, changes: CharacterChanges): void {
-        switch (character.characterKind) {
-            case 'player':
-                this.player.update(player => ({
-                    ...player,
-                    ...changes,
-                }));
-                return;
-
-            case 'enemy':
-                this.enemy.update(enemy => ({
-                    ...enemy,
-                    ...changes,
-                }));
-                return;
-        }
+    private stepProjectiles(): void {
+        const projectileIds = this.entities()
+            .filter(entity => entity.kind === 'projectile')
+            .map(entity => entity.id);
+        const events = projectileIds.flatMap(entityId =>
+            resolveIntent({ type: 'step', entityId }, this.entities())
+        );
+        this.commit(events);
     }
 
-    private moveProjectiles(): void {
-        this.spawnedEntities.update(entities =>
-        entities.map(entity => {
-            if (entity.kind !== 'projectile') {
-                return entity;
-            }
-            const position = getPosition(entity.position, entity.direction);
-            const entityAtPosition = findEntityAt(this.characters(), position);
-            // todo handle damage // despawning
-            return {
-                ...entity,
-                position,
-            };
-        }).filter(entity => isInsideBoard(entity.position)));
+    private commit(events: readonly GameEvent[]): void {
+        this.entities.set(applyEvents(this.entities(), events));
     }
 
     private endTurn(): void {
-        // todo move projectiles
-        this.moveProjectiles();
+        this.stepProjectiles();
 
         this.isPlayerTurn.update(b => !b);
         if (this.isPlayerTurn()) {
             this.round.update(round => round + 1);
         }
-
-        // todo update tile effects for next round
 
         this.startTurnTimer();
     }
@@ -197,11 +179,9 @@ export class BattleStore {
     private startTurnTimer(): void {
         this.stopTurnTimer();
         this.turnTimeRemaining.set(6);
-
         this.turnTimer = setInterval(() => {
             const nextValue = this.turnTimeRemaining() - 1;
             this.turnTimeRemaining.set(nextValue);
-
             if (nextValue <= 0) {
                 this.stopTurnTimer();
                 this.endTurn();

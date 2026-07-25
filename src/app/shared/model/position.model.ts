@@ -23,6 +23,10 @@ export function getPosition(
     };
 }
 
+export function positionKey(position: Position): string {
+    return `${position.x}:${position.y}`;
+}
+
 export function getSurroundingPositions(position: Position) {
     return [
         getPosition(position, 'up'),

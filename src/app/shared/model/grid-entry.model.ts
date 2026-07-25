@@ -25,3 +25,7 @@ export interface Object extends GridEntityBase {
     readonly kind: 'object';
     readonly moveInto: 'movable';
 }
+
+export function isCharacter(entity: GridEntity): entity is Character {
+    return entity.kind === 'character';
+}
