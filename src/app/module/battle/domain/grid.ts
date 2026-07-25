@@ -1,5 +1,6 @@
-import { DELTA, Entity, findActiveCharacter, GameState, Vec } from './types';
+import { Character, DELTA, Dir, Entity, findActiveCharacter, GameState, Vec } from './types';
 import { Action, findActiveAction } from './action';
+import { probeMove } from './movement';
 
 export const key = (p: Vec) => `${p.x},${p.y}`;
 export const add = (a: Vec, d: Vec): Vec => ({ x: a.x + d.x, y: a.y + d.y });
@@ -31,13 +32,13 @@ export function tileEffectIndex(s: GameState): ReadonlyMap<string, TileEffect> {
     if (!action) {
         return idx;
     }
-    for (const delta of Object.values(DELTA)) {
+    const occupants = spatialIndex(s);
+    for (const [dir, delta] of Object.entries(DELTA) as [Dir, Vec][]) {
         const position = add(character.pos, delta);
-
         if (!inBounds(s, position)) {
             continue;
         }
-        const effect = getTileEffect(action); // todo improve central logic to determine which moves are legal
+        const effect = getTileEffect(action, s, character, dir, occupants.get(key(position)) ?? []);
         if (effect) {
             idx.set(key(position), effect);
         }
@@ -45,14 +46,14 @@ export function tileEffectIndex(s: GameState): ReadonlyMap<string, TileEffect> {
     return idx;
 }
 
-function getTileEffect(action: Action): TileEffect | null {
+function getTileEffect(action: Action, s: GameState, mover: Character, dir: Dir, occupants: Entity[]): TileEffect | null {
     switch (action.kind) {
         case 'move':
-            return 'movable';
+            return probeMove(s, mover.id, dir).ok ? 'movable' : null;
         case 'attack':
-            return 'attackable'
+            return occupants.some(o => o.tags.has('mortal')) ? 'attackable' : null;
         case 'spawn':
-            return 'spawnable';
+            return occupants.some(o => o.tags.has('blocking')) ? null : 'spawnable';
     }
-    return null; // todo
+    return null;
 }
