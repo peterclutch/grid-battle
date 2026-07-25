@@ -2,47 +2,32 @@
     <div
             class="next-indicator"
             [class.turn]="isTurn()"
-            [class.enemy]="character().characterKind === 'enemy'"
+            [class.red]="character().team === 'red'"
             [style.--indicator-offset]="nextSlotOffset()"
             aria-hidden="true"
     ></div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(1)" [class.enemy]="character().characterKind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(0)" [class.red]="character().team === 'red'">
         <div>1</div>
         <div>{{ character().slot1?.name ?? 'Empty' }}</div>
     </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(2)" [class.enemy]="character().characterKind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(1)" [class.red]="character().team === 'red'">
         <div>2</div>
         <div>{{ character().slot2?.name ?? 'Empty' }}</div>
     </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(3)" [class.enemy]="character().characterKind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(2)" [class.red]="character().team === 'red'">
         <div>3</div>
         <div>{{ character().slot3?.name ?? 'Empty' }}</div>
     </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(0)" [class.enemy]="character().characterKind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(3)" [class.red]="character().team === 'red'">
         <div>4</div>
         <div>{{ character().slot4?.name ?? 'Empty' }}</div>
     </div>
 </div>
 <div class="info">
-<!--    <div class="guide">-->
-<!--        @if (isTurn()) {-->
-<!--            @switch (nextSlotAction()?.inputKind) {-->
-<!--                @case ('direction') {-->
-<!--                    Action: <span>Swipe!</span>-->
-<!--                }-->
-<!--                @case ('tap') {-->
-<!--                    Action: <span>Tap!</span>-->
-<!--                }-->
-<!--                @default {-->
-<!--                    Nothing to do!-->
-<!--                }-->
-<!--            }-->
-<!--        } @else {-->
-<!--            Wait..-->
-<!--        }-->
-<!--    </div>-->
     <div class="stats">
         <div class="name">{{ character().kind | uppercase }}</div>
-        <div class="health">Health: <span>{{ character().health | health }}</span></div>
+        <div class="health">Health: <span>{{ character().hp | health }}</span></div>
     </div>
 </div>
+
+<!-- TODO action picker logic should be centralized -->

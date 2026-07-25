@@ -1,4 +1,4 @@
-import { Command } from './turn';
+import { Command } from '../../../shared/model/command';
 
 export const KEYBOARD_INPUTS: Readonly<Record<string, Command>> = {
     ArrowUp:    { kind: 'direction', direction: 'N' },

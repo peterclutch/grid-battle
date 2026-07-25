@@ -1,6 +1,8 @@
 import { Dir, Entity, EntityId, GameState } from './types';
 import { GameEvent } from '../../../shared/model/event.model';
 import { commitMove, probeMove } from './movement';
+import { classify } from './interactions';
+import { spatialIndex } from './grid';
 
 export type Effect =
     | { kind: 'move'; target: EntityId; dir: Dir; cause?: EntityId }
@@ -22,7 +24,7 @@ export function runCascade(s0: GameState, seed: Effect[]): { state: GameState; l
         }
 
         const eff = queue.shift()!; // FIFO = breadth-first, feels simultaneous
-        const target = eff.kind === 'spawn' ? undefined : state.entities.get((eff as any).target);
+        const target = eff.kind === 'spawn' ? undefined : state.entities.get(eff.target);
         if (target?.dead) {
             continue;
         } // always re-read by id; never hold stale refs
@@ -67,5 +69,40 @@ function applyEffect(s: GameState, eff: Effect): { state: GameState; events: Gam
             const state = { ...s, entities: new Map(s.entities).set(e.id, { ...e, dead: true }) };
             return { state, events: [{ type: 'destroyed', id: e.id }], followUps: onDeath(e) };
         }
+        case 'spawn': {
+            const state = { ...s, entities: new Map(s.entities).set(eff.entity.id, eff.entity) };
+            return { state, events: [{ type: 'spawned', id: eff.entity.id }], followUps: [] };
+        }
     }
+}
+
+// hook for future death-triggered effects (drops, explosions, etc.) — none yet
+function onDeath(_e: Entity): Effect[] {
+    return [];
+}
+
+// a cascade step can leave two illegal things sharing a cell (e.g. a spawn landing on
+// an occupant); resolve those before the next step so invariants hold between phases
+function detectOverlaps(s: GameState): Effect[] {
+    const effects: Effect[] = [];
+    for (const occupants of spatialIndex(s).values()) {
+        if (occupants.length < 2) continue;
+        for (let i = 0; i < occupants.length; i++) {
+            for (let j = i + 1; j < occupants.length; j++) {
+                const a = occupants[i], b = occupants[j];
+                if (a.dead || b.dead) continue;
+                if (classify(a, b).type === 'pass') continue;
+                effects.push({ kind: 'destroy', target: b.id, cause: a.id });
+            }
+        }
+    }
+    return effects;
+}
+
+function sweepDead(s: GameState): GameState {
+    const entities = new Map(s.entities);
+    for (const [id, e] of entities) {
+        if (e.dead) entities.delete(id);
+    }
+    return { ...s, entities };
 }

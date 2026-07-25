@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
+import { BattleStore } from './battle.store';
+import { KEYBOARD_INPUTS } from './domain/input-map';
 import { GridComponent } from './grid/grid.component';
 import { CharacterDisplayComponent } from './character-display/character-display.component';
-import { CountdownComponent } from './countdown/countdown.component';
 
 @Component({
   selector: 'nou-battle',
@@ -12,24 +13,23 @@ import { CountdownComponent } from './countdown/countdown.component';
   },
   imports: [
     GridComponent,
-    CharacterDisplayComponent,
-    CountdownComponent
+    CharacterDisplayComponent
   ]
 })
 export class BattleComponent {
 
-  // readonly battle = inject(BattleStore);
+  readonly store = inject(BattleStore);
 
   onKeyDown(event: KeyboardEvent): void {
-    // if (event.repeat) {
-    //   return;
-    // }
-    // const input = KEYBOARD_INPUTS[event.code];
-    // if (!input) {
-    //   return;
-    // }
-    // event.preventDefault();
-    // this.battle.useInput(input);
+    if (event.repeat) {
+      return;
+    }
+    const input = KEYBOARD_INPUTS[event.code];
+    if (!input) {
+      return;
+    }
+    event.preventDefault();
+    this.store.dispatch(input);
   }
 
 }

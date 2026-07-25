@@ -1,6 +1,14 @@
-@for (tile of tiles(); track tile.x + ':' + tile.y) {
-    <nou-tile
-            [tile]="tile"
-            [entity]="entityAt(tile)"
-    />
-}
+<div
+        class="grid"
+        [style.--grid-width]="width()"
+        [style.--grid-height]="height()"
+        [style.grid-template-columns]="'repeat(' + width() + ', var(--cell-size))'"
+        [style.grid-template-rows]="'repeat(' + height() + ', var(--cell-size))'"
+>
+    @for (cell of cells(); track cell.index) {
+        <nou-tile
+            [entities]="entitiesAt(cell.x, cell.y)"
+            [effect]="tileEffectAt(cell.x, cell.y)"
+        />
+    }
+</div>

@@ -1,4 +1,4 @@
-import { Action } from './action.model';
+import { Action } from './action';
 
 export type EntityId = string & { readonly __brand: unique symbol };
 export function entityId(value: string): EntityId {
@@ -18,9 +18,9 @@ export type Tag =
     | 'blocking'    // cannot be entered
     | 'pushable'    // displaced by a mover
     | 'fragile'     // destroyed on impact
-    | 'damaging';   // deals damage on contact
-    // | 'mortal'      // has hp, can die
-    // | 'ephemeral';  // despawns on any collision (projectiles)
+    | 'damaging'    // deals damage on contact
+    | 'mortal'      // has hp, can die
+    | 'ephemeral';  // despawns on any collision (projectiles)
 
 export type Entity =
     | Character
@@ -31,11 +31,14 @@ export interface EntityBase {
     readonly id: EntityId;
     readonly pos: Vec;
     readonly tags: ReadonlySet<Tag>;
+    readonly dead?: boolean;
+    readonly hp?: number; // only meaningful when tagged 'mortal'
 }
 
 export interface Projectile extends EntityBase {
     readonly kind: 'projectile';
     readonly direction: Dir;
+    readonly power?: number; // damage dealt on impact, defaults to 1
 }
 
 export interface Object extends EntityBase {
@@ -59,4 +62,8 @@ export interface GameState {
     readonly turn: number;
     readonly activeTeam: 'blue' | 'red';
     readonly rngSeed: number;
+}
+
+export function findActiveCharacter(state: GameState): Character {
+    return [...state.entities.values()].find((e): e is Character=> e.kind === 'character' && e.team === state.activeTeam)!; // todo find a way to avoid '!'
 }

@@ -1,24 +1,23 @@
 import { Component, computed, input } from '@angular/core';
-import { Tile } from '../../../../shared/model/tile.model';
-import { GridEntity } from '../../../../shared/model/grid-entry.model';
+import { Entity } from '../../domain/types';
+import { TileEffect } from '../../domain/grid';
 
 @Component({
-  selector: 'nou-tile',
-  templateUrl: 'tile.component.html',
-  styleUrl: 'tile.component.scss',
-  host: {
-    '[class]': 'effectClass()',
-  },
+    selector: 'nou-tile',
+    templateUrl: 'tile.component.html',
+    styleUrl: 'tile.component.scss',
+    host: {
+        '[class]': 'effectClass()',
+    },
 })
 export class TileComponent {
 
-  readonly tile = input.required<Tile>();
-  readonly entity = input<GridEntity | null>(null);
+    readonly entities = input.required<Entity[]>();
+    readonly effect = input.required<TileEffect | null>();
 
-  protected readonly effectClass = computed(() => {
-    const effect = this.tile().effect;
-    return effect ? `effect--${effect}` : '';
-  });
+    protected readonly effectClass = computed(() => {
+        const effect = this.effect();
+        return effect ? `effect--${effect}` : '';
+    });
 
 }
-

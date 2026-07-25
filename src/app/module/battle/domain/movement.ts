@@ -2,6 +2,7 @@ import { DELTA, Dir, EntityId, GameState } from './types';
 import { add, inBounds, key, spatialIndex } from './grid';
 import { classify } from './interactions';
 import { Effect } from './effects';
+import { GameEvent } from '../../../shared/model/event.model';
 
 export type MoveResult =
     | { ok: false; reason: 'edge' | 'blocked' | 'cycle'; by?: EntityId }

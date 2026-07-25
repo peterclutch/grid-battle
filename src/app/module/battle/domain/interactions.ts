@@ -14,13 +14,9 @@ interface Rule {
 }
 
 export const RULES: readonly Rule[] = [
-    { id: 'wall',
-        when: (_, o) => o.kind === 'wall',
-        then: () => ({ type: 'block' }) },
-
     { id: 'projectile-hits-mortal',
         when: (m, o) => m.kind === 'projectile' && o.tags.has('mortal'),
-        then: (m) => ({ type: 'impact', damage: m.power ?? 1, stopMover: true }) },
+        then: (m) => ({ type: 'impact', damage: (m.kind === 'projectile' ? m.power : undefined) ?? 1, stopMover: true }) },
 
     { id: 'anything-crushes-projectile',
         when: (_, o) => o.tags.has('ephemeral'),

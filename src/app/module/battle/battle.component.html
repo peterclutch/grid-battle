@@ -1,19 +1,21 @@
-<!--<nou-character-display-->
-<!--        [character]="battle.enemy()"-->
-<!--        [isTurn]="!battle.isPlayerTurn()"-->
-<!--        [round]="battle.round()"-->
-<!--/>-->
-<!--<nou-grid-->
-<!--        [tiles]="battle.tiles()"-->
-<!--        [entities]="battle.entities()"-->
-<!--/>-->
-<!--<nou-character-display-->
-<!--        [character]="battle.player()"-->
-<!--        [isTurn]="battle.isPlayerTurn()"-->
-<!--        [round]="battle.round()"-->
-<!--/>-->
+<nou-character-display
+        [character]="store.redPlayer()"
+        [isTurn]="store.state().activeTeam === 'red'"
+        [round]="store.state().turn"
+/>
+<nou-grid
+        [width]="store.state().width"
+        [height]="store.state().height"
+        [entities]="store.entityIndex()"
+        [tileEffects]="store.tileEffectIndex()"
+/>
+<nou-character-display
+        [character]="store.bluePlayer()"
+        [isTurn]="store.state().activeTeam === 'blue'"
+        [round]="store.state().turn"
+/>
 <!--<nou-countdown-->
-<!--        [currentStep]="battle.turnTimeRemaining() - 1"-->
+<!--        [currentStep]="store.state().turnTimeRemaining() - 1"-->
 <!--        [totalSteps]="5"-->
-<!--        [theme]="battle.isPlayerTurn() ? 'blue' : 'red'"-->
+<!--        [theme]="store.state().activeTeam"-->
 <!--/>-->

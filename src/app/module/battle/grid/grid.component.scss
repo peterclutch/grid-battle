@@ -1,6 +1,18 @@
-:host {
+//:host {
+//  display: grid;
+//  grid-template-columns: repeat(5, minmax(0, 1fr));
+//  gap: 4px;
+//  width: min(90vw, 600px);
+//}
+
+.grid {
+  --cell-size: min(
+          calc(90vw / var(--grid-width)),
+          calc(80vh / var(--grid-height))
+  );
+
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 4px;
-  width: min(90vw, 600px);
+  width: fit-content;
+  border: 1px solid #333;
+
 }
