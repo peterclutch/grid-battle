@@ -1,6 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { Character, Entity, EntityId, entityId, findActiveCharacter, GameState, Tag } from './domain/types';
-import { spatialIndex, tileEffectIndex } from './domain/grid';
+import { tileEffectIndex } from './domain/grid';
 import { FireballAction, MoveAction, PunchAction } from './domain/action';
 import { runTurn } from './domain/turn';
 import { Command } from '../../shared/model/command';
@@ -17,7 +17,6 @@ export class BattleStore {
     readonly state = this._state.asReadonly();
     
     readonly entities = computed(() => [...this._state().entities.values()]);
-    readonly entityIndex = computed(() => spatialIndex(this._state()));
     readonly tileEffectIndex = computed(() => tileEffectIndex(this._state()));
 
     readonly activeCharacter = computed(() => findActiveCharacter(this._state()));

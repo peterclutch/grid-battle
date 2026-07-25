@@ -1,0 +1,70 @@
+:host {
+  position: absolute;
+  inset: 0;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  pointer-events: none;
+  transform: translate(calc(var(--x) * var(--cell-size)), calc(var(--y) * var(--cell-size)));
+  transition: transform 150ms ease;
+}
+
+.token {
+  width: 60%;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+}
+
+.player,
+.enemy {
+  border-radius: 50%;
+}
+
+.player {
+  background: linear-gradient(
+          145deg,
+          #218bff,
+          #0969da
+  );
+}
+
+.enemy {
+  background: linear-gradient(
+          145deg,
+          #f85149,
+          #d1242f
+  );
+}
+
+.projectile {
+  width: 50%;
+  aspect-ratio: 1;
+  border-radius: 50% 50% 50% 0;
+  background:
+          radial-gradient(
+                  circle at 65% 35%,
+                  #fff7a8 0 8%,
+                  #ffcf33 20%,
+                  #ff7a00 55%,
+                  #d93400 100%
+          );
+  transform: rotate(45deg);
+}
+
+.projectile[data-direction='E'] {
+  transform: rotate(45deg);
+}
+
+.projectile[data-direction='S'] {
+  transform: rotate(135deg);
+}
+
+.projectile[data-direction='W'] {
+  transform: rotate(225deg);
+}
+
+.projectile[data-direction='N'] {
+  transform: rotate(315deg);
+}

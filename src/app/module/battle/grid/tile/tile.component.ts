@@ -1,5 +1,4 @@
 import { Component, computed, input } from '@angular/core';
-import { Entity } from '../../domain/types';
 import { TileEffect } from '../../domain/grid';
 
 @Component({
@@ -12,7 +11,6 @@ import { TileEffect } from '../../domain/grid';
 })
 export class TileComponent {
 
-    readonly entities = input.required<Entity[]>();
     readonly effect = input.required<TileEffect | null>();
 
     protected readonly effectClass = computed(() => {

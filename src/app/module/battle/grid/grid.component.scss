@@ -6,13 +6,15 @@
 //}
 
 .grid {
-  --cell-size: min(
-          calc(90vw / var(--grid-width)),
-          calc(80vh / var(--grid-height))
-  );
-
+  --cell-size: min(calc(90vw / var(--grid-width)), calc(80vh / var(--grid-height)));
   display: grid;
   width: fit-content;
   border: 1px solid #333;
+  position: relative;
+}
 
+.entities {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
