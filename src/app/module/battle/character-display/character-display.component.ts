@@ -21,23 +21,23 @@ export class CharacterDisplayComponent {
   readonly nextSlotIndex = computed(() => {
     const isGoingFirst = this.character().kind === 'player';
     const addToIndex = !this.isTurn() && isGoingFirst ? 1 : 0
-    return (this.round() % 4) + addToIndex;
+    return (this.round() + addToIndex) % 4;
   });
-  readonly nextSlotAction = computed(() => {
-    const character = this.character();
-    switch (this.nextSlotIndex()) {
-      case 0:
-        return character.slot4;
-      case 1:
-        return character.slot1;
-      case 2:
-        return character.slot2;
-      case 3:
-        return character.slot3;
-      default:
-        return null;
-    }
-  });
+  // readonly nextSlotAction = computed(() => {
+  //   const character = this.character();
+  //   switch (this.nextSlotIndex()) {
+  //     case 0:
+  //       return character.slot4;
+  //     case 1:
+  //       return character.slot1;
+  //     case 2:
+  //       return character.slot2;
+  //     case 3:
+  //       return character.slot3;
+  //     default:
+  //       return null;
+  //   }
+  // });
   readonly nextSlotOffset = computed(() => {
     const index = this.nextSlotIndex();
     const position = index === 0 ? 3 : index - 1;

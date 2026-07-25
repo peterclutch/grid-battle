@@ -1,8 +1,13 @@
-@if (character(); as occupant) {
+@if (entity(); as occupant) {
     <span
-            class="character"
+            class="entity"
             [class.player]="occupant.kind === 'player'"
             [class.enemy]="occupant.kind === 'enemy'"
-    >
-    </span>
+            [class.projectile]="occupant.kind === 'projectile'"
+            [attr.data-direction]="
+            occupant.kind === 'projectile'
+                ? occupant.direction
+                : null
+        "
+    ></span>
 }

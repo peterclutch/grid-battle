@@ -1,6 +1,6 @@
-import { Component, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { Tile } from '../../../../shared/model/tile.model';
-import { Character } from '../../../../shared/model/character.model';
+import { GridEntity } from '../../../../shared/model/grid-entry.model';
 
 @Component({
   selector: 'nou-tile',
@@ -10,7 +10,7 @@ import { Character } from '../../../../shared/model/character.model';
 export class TileComponent {
 
   readonly tile = input.required<Tile>();
-  readonly character = input<Character | null>(null);
+  readonly entity = input<GridEntity | null>(null);
 
 }
 

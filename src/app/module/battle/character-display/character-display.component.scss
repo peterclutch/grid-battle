@@ -22,7 +22,7 @@
     width: calc((100% - 12px) / 4);
 
     box-sizing: border-box;
-    border: 2px solid hsl(213, 30%, 55%);
+    border: 2px solid hsl(210, 19%, 48%);
     border-radius: 4px;
     pointer-events: none;
     transform: translateX(var(--indicator-offset));
@@ -33,7 +33,11 @@
             border-color 100ms ease;
 
     &.turn {
-      border-color: #1a7f37;
+      border-color: #0969da;
+
+      &.enemy {
+        border-color: #d1242f;
+      }
     }
   }
 
@@ -55,8 +59,13 @@
     }
 
     &.turn.next {
-      background-color: #dafbe1;
-      color: #1a7f37;
+      background-color: #ddf4ff;
+      color: #0969da;
+
+      &.enemy {
+        background-color: #ffebe9;
+        color: #d1242f;
+      }
     }
   }
 }

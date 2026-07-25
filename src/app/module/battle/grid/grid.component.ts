@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { TileComponent } from './tile/tile.component';
-import { Character } from '../../../shared/model/character.model';
 import { Tile } from '../../../shared/model/tile.model';
+import { GridEntity } from '../../../shared/model/grid-entry.model';
 
 @Component({
   selector: 'nou-grid',
@@ -14,16 +14,12 @@ import { Tile } from '../../../shared/model/tile.model';
 export class GridComponent {
 
   readonly tiles = input.required<Tile[]>();
-  readonly characters = input.required<Character[]>();
+  readonly entities = input.required<GridEntity[]>();
 
-  characterAt(tile: Tile): Character | null {
-    return (
-        this.characters().find(
-            character =>
-                character.position.x === tile.x &&
-                character.position.y === tile.y,
-        ) ?? null
-    );
+  entityAt(tile: Tile): GridEntity | null {
+    return this.entities().find(entity =>
+        entity.position.x === tile.x && entity.position.y === tile.y
+    ) ?? null;
   }
 
 }

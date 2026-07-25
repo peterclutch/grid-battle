@@ -1,15 +1,19 @@
 <nou-character-display
-        [character]="enemy()"
-        [isTurn]="!isPlayerTurn()"
-        [round]="round()"
+        [character]="battle.enemy()"
+        [isTurn]="!battle.isPlayerTurn()"
+        [round]="battle.round()"
 />
 <nou-grid
         [tiles]="tiles"
-        [characters]="characters()"
+        [entities]="battle.gridEntities()"
 />
 <nou-character-display
-        [character]="player()"
-        [isTurn]="isPlayerTurn()"
-        [round]="round()"
+        [character]="battle.player()"
+        [isTurn]="battle.isPlayerTurn()"
+        [round]="battle.round()"
 />
-<nou-countdown [currentStep]="turnTimeRemaining() - 1" [totalSteps]="6 - 1" [theme]="isPlayerTurn() ? 'blue' : 'red'"/>
+<nou-countdown
+        [currentStep]="battle.turnTimeRemaining() - 1"
+        [totalSteps]="5"
+        [theme]="battle.isPlayerTurn() ? 'blue' : 'red'"
+/>
