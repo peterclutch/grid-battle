@@ -10,9 +10,9 @@ import { GridEntity, NonCharacterEntity } from '../../shared/model/grid-entry.mo
 import { Direction, GameInput } from '../../shared/model/input.model';
 import { FireballAction, MoveAction, PunchAction } from '../../shared/model/action.model';
 import { getPosition, getSurroundingPositions } from '../../shared/model/position.model';
-import { findCharacterAt, isInsideBoard } from './battle.rules';
+import { findCharacterAt, findEntityAt, isInsideBoard } from './battle.rules';
 
-type CharacterChanges = Partial<Omit<Character, 'kind'>>;
+type CharacterChanges = Partial<Omit<Character, 'characterKind'>>;
 
 @Service()
 export class BattleStore {
@@ -23,7 +23,9 @@ export class BattleStore {
     readonly turnTimeRemaining = signal(6);
 
     readonly player = signal<Player>({
-        kind: 'player',
+        kind: 'character',
+        characterKind: 'player',
+        moveInto: 'immovable',
         id: 'player',
         position: { x: 2, y: 4 },
         health: 3,
@@ -33,7 +35,9 @@ export class BattleStore {
         slot4: FireballAction,
     });
     readonly enemy = signal<Enemy>({
-        kind: 'enemy',
+        kind: 'character',
+        characterKind: 'enemy',
+        moveInto: 'immovable',
         id: 'enemy',
         position: { x: 2, y: 1 },
         health: 3,
@@ -42,21 +46,19 @@ export class BattleStore {
         slot3: MoveAction,
         slot4: PunchAction,
     });
-
     readonly characters = computed<Character[]>(() => [
         this.player(),
         this.enemy(),
     ]);
-
     readonly spawnedEntities = signal<NonCharacterEntity[]>([
         {
-            id: 'test1',
             kind: 'projectile',
+            id: 'test1',
+            moveInto: 'absorb',
             direction: 'down',
             position: { x: 2, y: 0 },
         },
     ]);
-
     readonly gridEntities = computed<GridEntity[]>(() => [
         ...this.characters(),
         ...this.spawnedEntities(),
@@ -64,11 +66,9 @@ export class BattleStore {
 
     readonly round = signal(1);
     readonly isPlayerTurn = signal(true);
-
     readonly activeCharacter = computed(() =>
         this.isPlayerTurn() ? this.player() : this.enemy()
     );
-
     readonly activeAction = computed(() => {
         const character = this.activeCharacter();
         const slots = [
@@ -79,7 +79,6 @@ export class BattleStore {
         ];
         return slots[(this.round() - 1) % slots.length];
     });
-
 
     constructor() {
         this.destroyRef.onDestroy(() => this.stopTurnTimer());
@@ -126,7 +125,7 @@ export class BattleStore {
     private attack(character: Character): boolean {
         const positions = getSurroundingPositions(character.position);
         positions.forEach((position) => {
-            const attackedCharacter = findCharacterAt(this.characters(), position, character.id);
+            const attackedCharacter = findCharacterAt(this.characters(), position);
             if (attackedCharacter) {
                 const health = attackedCharacter.health;
                 this.updateCharacter(attackedCharacter, { health: health === 0 ? health : health - 1 });
@@ -137,15 +136,18 @@ export class BattleStore {
 
     private moveCharacter(character: Character, direction: Direction): boolean {
         const position = getPosition(character.position, direction);
-        if (!isInsideBoard(position) || findCharacterAt(this.characters(), position, character.id)) {
+        const entityAtPosition = findEntityAt(this.characters(), position);
+
+        // todo handle absorb etc.
+        if (!isInsideBoard(position) || entityAtPosition?.moveInto === 'immovable') {
             return false;
         }
-        this.updateCharacter(character, { position });
+        this.updateCharacter(character, { position }); // todo technically a side effect
         return true;
     }
 
     private updateCharacter(character: Character, changes: CharacterChanges): void {
-        switch (character.kind) {
+        switch (character.characterKind) {
             case 'player':
                 this.player.update(player => ({
                     ...player,
@@ -162,15 +164,33 @@ export class BattleStore {
         }
     }
 
+    private moveProjectiles(): void {
+        this.spawnedEntities.update(entities =>
+        entities.map(entity => {
+            if (entity.kind !== 'projectile') {
+                return entity;
+            }
+            const position = getPosition(entity.position, entity.direction);
+            const entityAtPosition = findEntityAt(this.characters(), position);
+            // todo handle damage // despawning
+            return {
+                ...entity,
+                position,
+            };
+        }).filter(entity => isInsideBoard(entity.position)));
+    }
+
     private endTurn(): void {
-        const characterCount = this.characters().length;
-        if (characterCount === 0) {
-            return;
-        }
+        // todo move projectiles
+        this.moveProjectiles();
+
         this.isPlayerTurn.update(b => !b);
         if (this.isPlayerTurn()) {
             this.round.update(round => round + 1);
         }
+
+        // todo update tile effects for next round
+
         this.startTurnTimer();
     }
 
@@ -188,7 +208,6 @@ export class BattleStore {
             }
         }, 500);
     }
-
 
     private stopTurnTimer(): void {
         if (this.turnTimer !== undefined) {

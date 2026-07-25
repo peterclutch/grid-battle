@@ -19,7 +19,7 @@ export class CharacterDisplayComponent {
   readonly round = input.required<number>();
 
   readonly nextSlotIndex = computed(() => {
-    const isGoingFirst = this.character().kind === 'player';
+    const isGoingFirst = this.character().characterKind === 'player';
     const addToIndex = !this.isTurn() && isGoingFirst ? 1 : 0
     return (this.round() + addToIndex) % 4;
   });

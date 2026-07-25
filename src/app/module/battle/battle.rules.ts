@@ -1,5 +1,6 @@
-import { Character } from '../../shared/model/character.model';
 import { Position } from '../../shared/model/position.model';
+import { GridEntity } from '../../shared/model/grid-entry.model';
+import { Character } from '../../shared/model/character.model';
 
 export const BOARD_WIDTH = 5;
 export const BOARD_HEIGHT = 6;
@@ -13,13 +14,21 @@ export function isInsideBoard(position: Position): boolean {
     );
 }
 
+export function findEntityAt(
+    entities: readonly GridEntity[],
+    position: Position,
+): GridEntity | null {
+    return entities.find(character =>
+        character.position.x === position.x &&
+        character.position.y === position.y
+    ) ?? null;
+}
+
 export function findCharacterAt(
     characters: readonly Character[],
     position: Position,
-    excludedId?: string, // todo not sure exlude is needed
 ): Character | null {
     return characters.find(character =>
-        character.id !== excludedId &&
         character.position.x === position.x &&
         character.position.y === position.y
     ) ?? null;

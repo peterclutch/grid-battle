@@ -1,8 +1,8 @@
 @if (entity(); as occupant) {
     <span
             class="entity"
-            [class.player]="occupant.kind === 'player'"
-            [class.enemy]="occupant.kind === 'enemy'"
+            [class.player]="occupant.kind === 'character' && occupant.characterKind == 'player'"
+            [class.enemy]="occupant.kind === 'character' && occupant.characterKind === 'enemy'"
             [class.projectile]="occupant.kind === 'projectile'"
             [attr.data-direction]="
             occupant.kind === 'projectile'

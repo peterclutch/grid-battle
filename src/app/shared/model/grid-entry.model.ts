@@ -12,13 +12,16 @@ export type NonCharacterEntity = Exclude<GridEntity, Character>;
 export interface GridEntityBase {
     readonly id: string;
     position: Position;
+    moveInto: 'absorb' | 'movable' | 'immovable';
 }
 
 export interface Projectile extends GridEntityBase {
     readonly kind: 'projectile';
+    readonly moveInto: 'absorb';
     direction: Direction;
 }
 
 export interface Object extends GridEntityBase {
     readonly kind: 'object';
+    readonly moveInto: 'movable';
 }

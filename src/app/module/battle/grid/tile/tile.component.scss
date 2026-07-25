@@ -9,6 +9,13 @@
   &:nth-child(odd) {
     background: #dadada;
   }
+
+  &.effect {
+    &--movable {
+      background: #ddf4ff;
+      border: 2px dotted #0969da;
+    }
+  }
 }
 
 .entity {

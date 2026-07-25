@@ -4,6 +4,8 @@ import { GridEntityBase } from './grid-entry.model';
 export type Character = Player | Enemy;
 
 export interface CharacterBase extends GridEntityBase {
+    readonly kind: 'character';
+    readonly moveInto: 'immovable';
     health: number; // todo more enforcement
     slot1: Action | null;
     slot2: Action | null;
@@ -12,9 +14,9 @@ export interface CharacterBase extends GridEntityBase {
 }
 
 export interface Player extends CharacterBase {
-    readonly kind: 'player';
+    readonly characterKind: 'player';
 }
 
 export interface Enemy extends CharacterBase {
-    readonly kind: 'enemy';
+    readonly characterKind: 'enemy';
 }

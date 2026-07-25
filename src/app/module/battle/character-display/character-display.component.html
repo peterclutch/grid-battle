@@ -2,23 +2,23 @@
     <div
             class="next-indicator"
             [class.turn]="isTurn()"
-            [class.enemy]="character().kind === 'enemy'"
+            [class.enemy]="character().characterKind === 'enemy'"
             [style.--indicator-offset]="nextSlotOffset()"
             aria-hidden="true"
     ></div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(1)" [class.enemy]="character().kind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(1)" [class.enemy]="character().characterKind === 'enemy'">
         <div>1</div>
         <div>{{ character().slot1?.name ?? 'Empty' }}</div>
     </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(2)" [class.enemy]="character().kind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(2)" [class.enemy]="character().characterKind === 'enemy'">
         <div>2</div>
         <div>{{ character().slot2?.name ?? 'Empty' }}</div>
     </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(3)" [class.enemy]="character().kind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(3)" [class.enemy]="character().characterKind === 'enemy'">
         <div>3</div>
         <div>{{ character().slot3?.name ?? 'Empty' }}</div>
     </div>
-    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(0)" [class.enemy]="character().kind === 'enemy'">
+    <div class="slot" [class.turn]="isTurn()" [class.next]="isNext(0)" [class.enemy]="character().characterKind === 'enemy'">
         <div>4</div>
         <div>{{ character().slot4?.name ?? 'Empty' }}</div>
     </div>
