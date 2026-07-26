@@ -11,6 +11,6 @@ export const KEYBOARD_INPUTS: Readonly<Record<string, Command>> = {
     KeyA: { kind: 'direction', direction: 'W' },
     KeyD: { kind: 'direction', direction: 'E' },
 
-    Space: { kind: 'tap' },
-    Enter: { kind: 'tap' },
+    Space: { kind: 'skip' },
+    Enter: { kind: 'skip' },
 };

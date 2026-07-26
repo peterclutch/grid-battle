@@ -69,10 +69,8 @@ export function actionIntends(action: Action, ctx: ActionContext, cmd: Command):
     switch (action.inputKind) {
         case 'direction':
             return cmd.kind === 'direction' ? action.intends(ctx, cmd) : [];
-        case 'tap':
-            return cmd.kind === 'tap' ? action.intends(ctx, cmd) : [];
-        case 'wait':
-            return cmd.kind === 'wait' ? action.intends(ctx, cmd) : [];
+        case 'skip':
+            return [];
     }
 }
 
@@ -143,25 +141,6 @@ export const strike = (name: string, reach: number, knockback = false): ActionOf
     },
 });
 
-/**
- * Hit every neighbour at once. A tap has no direction, so this is what a tap-attack has
- * to mean. Knockback radiates outward, which is why each square gets its own intend
- * rather than sharing one.
- */
-export const burst = (name: string, knockback = false): ActionOf<'tap'> => ({
-    name,
-    category: 'attack',
-    inputKind: 'tap',
-
-    intends({ actor }) {
-        return NEIGHBOURS.map((dir): Intend => ({
-            kind: 'attack',
-            square: step(actor.pos, dir),
-            knockback: knockback ? dir : undefined,
-        }));
-    },
-});
-
 /** Launch a projectile into the square ahead. */
 export const projectile = (name: string, prefix: string, tags: ReadonlySet<Tag>): ActionOf<'direction'> => ({
     name,
@@ -187,7 +166,6 @@ export const projectile = (name: string, prefix: string, tags: ReadonlySet<Tag>)
 const FIREBALL_TAGS: ReadonlySet<Tag> = new Set<Tag>(['ephemeral', 'damaging']);
 
 export const MoveAction = dash('Move', 1);
-export const PunchAction = burst('Punch');
 export const StrikeAction = strike('Strike', 2);
 export const FireballAction = projectile('Fireball', 'fireball', FIREBALL_TAGS);
 

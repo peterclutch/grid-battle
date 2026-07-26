@@ -11,10 +11,8 @@ function commandsFor(inputKind: Command['kind']): readonly Command[] {
     switch (inputKind) {
         case 'direction':
             return DIRECTIONS.map(direction => ({ kind: 'direction', direction }));
-        case 'tap':
-            return [{ kind: 'tap' }];
-        case 'wait':
-            return [{ kind: 'wait' }];
+        case 'skip':
+            return [{ kind: 'skip' }];
     }
 }
 
