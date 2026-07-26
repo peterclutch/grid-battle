@@ -3,6 +3,7 @@ import { BattleStore } from './battle.store';
 import { KEYBOARD_INPUTS } from './domain/input-map';
 import { GridComponent } from './grid/grid.component';
 import { CharacterDisplayComponent } from './character-display/character-display.component';
+import { CountdownComponent } from './countdown/countdown.component';
 
 @Component({
   selector: 'nou-battle',
@@ -13,7 +14,8 @@ import { CharacterDisplayComponent } from './character-display/character-display
   },
   imports: [
     GridComponent,
-    CharacterDisplayComponent
+    CharacterDisplayComponent,
+    CountdownComponent
   ]
 })
 export class BattleComponent {

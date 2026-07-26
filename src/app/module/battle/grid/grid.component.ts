@@ -28,4 +28,9 @@ export class GridComponent {
     tileEffectAt(x: number, y: number): TileEffect | null {
         return this.store.tileEffectIndex().get(`${x},${y}`) ?? null;
     }
+
+    /** The turn this square was last swung at, or null. Tiles animate off the change. */
+    struckOn(x: number, y: number): number | null {
+        return this.store.struckIndex().get(`${x},${y}`) ?? null;
+    }
 }

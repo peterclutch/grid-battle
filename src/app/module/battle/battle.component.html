@@ -11,8 +11,8 @@
         [isTurn]="store.state().activeTeam === 'blue'"
         [turn]="store.state().turn"
 />
-<!--<nou-countdown-->
-<!--        [currentStep]="store.state().turnTimeRemaining() - 1"-->
-<!--        [totalSteps]="5"-->
-<!--        [theme]="store.state().activeTeam"-->
-<!--/>-->
+<nou-countdown
+        [currentStep]="store.turnTimeRemaining() - 1"
+        [totalSteps]="5"
+        [theme]="store.state().activeTeam"
+/>

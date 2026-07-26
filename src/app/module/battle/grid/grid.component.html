@@ -6,7 +6,7 @@
         [style.grid-template-rows]="'repeat(' + store.state().height + ', var(--cell-size))'"
 >
     @for (cell of cells(); track cell.index) {
-        <nou-tile [effect]="tileEffectAt(cell.x, cell.y)" />
+        <nou-tile [effect]="tileEffectAt(cell.x, cell.y)" [struckOn]="struckOn(cell.x, cell.y)" />
     }
     <div class="entities">
         @for (entity of store.entities(); track entity.id) {

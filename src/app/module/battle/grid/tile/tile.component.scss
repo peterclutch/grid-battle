@@ -66,6 +66,18 @@
   }
 }
 
+// Painted only while a blow is being animated; idle at zero opacity the rest of the time.
+// Sits under the entity layer, so a token being hit stays on top of its own square.
+.strike {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(209, 36, 47, 0.45);
+  border: 2px solid rgba(209, 36, 47, 0.9);
+}
+
 @keyframes tile-pulse {
   0%, 100% {
     opacity: 0.55;
