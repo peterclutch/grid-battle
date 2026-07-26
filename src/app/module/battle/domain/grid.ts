@@ -16,6 +16,7 @@ export const occupantsAt = (s: GameState, p: Vec): Entity[] =>
 export function spatialIndex(s: GameState): ReadonlyMap<string, Entity[]> {
     const idx = new Map<string, Entity[]>();
     for (const e of s.entities.values()) {
+        if (e.dead) continue; // corpses are swept at the end of the cascade, but they block nothing before then
         (idx.get(key(e.pos)) ?? idx.set(key(e.pos), []).get(key(e.pos))!).push(e);
     }
     return idx;

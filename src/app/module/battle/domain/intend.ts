@@ -5,9 +5,9 @@ import { Dir, Entity, Vec } from './types';
  * it never reaches `runCascade` — `resolve()` compiles it into Effects first.
  *
  * Because intends are erased before anything mechanical sees them, they can afford to
- * be declarative and action-specific. `harmOnStop` on a charge does not have to agree
- * with `classify` about anything, since by the time the cascade runs it has already
- * become a concrete `damage` effect aimed at a known entity.
+ * be declarative and action-specific. `knockbackOnStop` on a charge does not have to
+ * agree with `classify` about anything, since by the time the cascade runs it has
+ * already become concrete `damage` and `move` effects aimed at a known entity.
  *
  * Intends are addressed by square and direction, never by entity id: an action swings
  * at a place, and cannot know what is standing there. The actor is implicit — the
@@ -33,9 +33,11 @@ export type Intend =
         dir: Dir;
         /** 'max' slides until something stops you */
         distance: number | 'max';
-        /** hurt whatever brought the movement to a halt */
-        harmOnStop?: boolean;
-        /** shove whatever brought the movement to a halt */
+        /**
+         * Hit whatever brought the movement to a halt and shove it one square. The blow
+         * always lands; the mover takes the vacated square only if the victim clears it,
+         * and a victim with nowhere to go is crushed against whatever is behind it.
+         */
         knockbackOnStop?: boolean;
     }
     | { kind: 'spawn'; entity: Entity };

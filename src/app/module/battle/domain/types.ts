@@ -20,7 +20,7 @@ export type Tag =
     | 'fragile'     // destroyed on impact
     | 'damaging'    // deals damage on contact
     | 'mortal'      // has hp, can die
-    | 'ephemeral';  // despawns on any collision (projectiles)
+    | 'ephemeral';  // in flight: spent on what it hits, and walked through rather than hit (projectiles)
 
 export type Entity =
     | Character

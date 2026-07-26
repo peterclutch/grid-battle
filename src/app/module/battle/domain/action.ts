@@ -105,9 +105,7 @@ const NEIGHBOURS: readonly Dir[] = ['N', 'E', 'S', 'W'];
 // anything continuous is a single intend the resolver expands.
 
 export interface DashOptions {
-    /** hurt whatever stops the slide */
-    readonly harmOnStop?: boolean;
-    /** shove whatever stops the slide */
+    /** hit and shove whatever stops the slide, then take its square if it clears */
     readonly knockbackOnStop?: boolean;
     readonly category?: ActionCategory;
 }
@@ -123,7 +121,6 @@ export const dash = (name: string, distance: number | 'max', opts: DashOptions =
             kind: 'move',
             dir: cmd.direction,
             distance,
-            harmOnStop: opts.harmOnStop,
             knockbackOnStop: opts.knockbackOnStop,
         }];
     },
@@ -194,8 +191,5 @@ export const PunchAction = burst('Punch');
 export const StrikeAction = strike('Strike', 2);
 export const FireballAction = projectile('Fireball', 'fireball', FIREBALL_TAGS);
 
-/** Slide until something stops you, and hurt whatever that was. */
-export const ChargeAction = dash('Charge', 'max', { harmOnStop: true, category: 'attack' });
-
-/** Same, but the victim is shoved along instead of just bruised. */
-export const ShoveAction = dash('Shove', 'max', { harmOnStop: true, knockbackOnStop: true, category: 'attack' });
+/** Slide until something stops you, then hit it and shove it out of the way. */
+export const ChargeAction = dash('Charge', 'max', { knockbackOnStop: true, category: 'attack' });

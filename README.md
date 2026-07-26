@@ -1,59 +1,61 @@
 # Grid Battle
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.8.
+A turn-based tactics game on a grid. Two teams alternate turns; each character cycles
+through four action slots, and every turn is one command (a direction or a tap) applied
+to whichever action is currently armed.
 
-## Development server
+Built with Angular 22 and signals.
 
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Getting started
 
 ```bash
-ng generate component component-name
+npm install
+npm start      # dev server at http://localhost:4200
+npm run build  # production build into dist/
+npm test       # unit tests (Vitest)
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Controls
 
-```bash
-ng generate --help
+- Arrow keys / `WASD` — directional command
+- `Space` / `Enter` — tap command
+
+## How a turn works
+
+```
+Command → Action.intends() → Intend[] → resolve() → Effect[] → runCascade() → GameState
 ```
 
-## Building
+- **Action** translates a command into wishes (`Intend`). Pure, and never asks whether the
+  wish is legal.
+- **resolve** decides legality and compiles intends into concrete `Effect`s. A refusal here
+  rejects the whole turn.
+- **runCascade** applies effects breadth-first, including knock-on collisions, pushes and
+  deaths. No legality checks at this stage.
+- Projectiles drift at the end of every turn, then the active team flips. A projectile
+  only hurts what it flies into — stepping onto the square one currently sits on is a
+  dodge, and leaves it intact.
 
-To build the project run:
+State is immutable and entity ids are derived deterministically from the turn number, so
+the same commands always replay to the same board.
 
-```bash
-ng build
+## Layout
+
+```
+src/app/module/battle/
+  domain/           game rules — pure TypeScript, no Angular
+    types.ts        entities, tags, GameState
+    action.ts       action definitions and factories (dash, strike, burst, projectile)
+    intend.ts       what an action wishes for
+    resolve.ts      intends → effects, plus legality
+    effect.ts       the cascade
+    movement.ts     move probing and commit
+    interactions.ts tag-based collision rules
+    preview.ts      tile highlights, derived from resolution
+    turn.ts         runTurn
+  battle.store.ts   signal store and initial board
+  grid/             grid, tile and entity components
+  character-display/
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+`domain/` has no Angular dependency — the rules can be tested and replayed on their own.

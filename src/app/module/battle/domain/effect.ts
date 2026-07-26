@@ -2,7 +2,7 @@ import { Entity, EntityId, GameState } from './types';
 import { Dir } from './types';
 import { GameEvent } from '../../../shared/model/event.model';
 import { commitMove, probeMove } from './movement';
-import { classify } from './interactions';
+import { canShare, classify } from './interactions';
 import { inBounds, occupantsAt, spatialIndex } from './grid';
 
 /**
@@ -43,9 +43,14 @@ export function runCascade(s0: GameState, effects: readonly Effect[]): { state: 
         }
 
         const effect = queue.shift()!; // FIFO = breadth-first, feels simultaneous
-        if (effect.kind !== 'spawn' && state.entities.get(effect.target)?.dead) {
-            continue;
-        } // always re-read by id; never hold stale refs
+        // always re-read by id; never hold stale refs. Gone or dying, the effect lapses —
+        // an earlier phase may already have swept the target off the board.
+        if (effect.kind !== 'spawn') {
+            const target = state.entities.get(effect.target);
+            if (!target || target.dead) {
+                continue;
+            }
+        }
 
         const r = applyEffect(state, effect);
         state = r.state;
@@ -71,8 +76,17 @@ function applyEffect(s: GameState, effect: Effect): Applied {
             const r = probeMove(s, effect.target, effect.dir);
             if (!r.ok) {
                 const e = s.entities.get(effect.target)!;
-                // a projectile that can't advance dies; a rock just stops
-                const followUps: Effect[] = e.tags.has('ephemeral') ? [{ kind: 'destroy', target: e.id }] : [];
+                const followUps: Effect[] = [];
+                if (e.tags.has('ephemeral')) {
+                    followUps.push({ kind: 'destroy', target: e.id }); // a projectile that can't advance dies
+                } else if (effect.cause) {
+                    // shoved into something that will not give way. Walking into a wall
+                    // under your own power is free; being pressed into one is not.
+                    followUps.push({ kind: 'damage', target: e.id, cause: effect.cause });
+                }
+                if (r.crushed) {
+                    followUps.push({ kind: 'damage', target: r.crushed, cause: effect.target });
+                }
                 return { state: s, events: [{ type: 'blocked', id: effect.target, reason: r.reason }], followUps };
             }
             const c = commitMove(s, r.chain, effect.dir);
@@ -108,8 +122,10 @@ function applyEffect(s: GameState, effect: Effect): Applied {
         }
         case 'spawn': {
             const e = effect.entity;
-            // resolve() vets seed spawns; this guards the ones a cascade creates
-            if (!inBounds(s, e.pos) || occupantsAt(s, e.pos).some(o => o.tags.has('blocking'))) {
+            // resolve() vets seed spawns and works out what they land on; this only guards
+            // the ones a cascade creates, and only against the square being unusable
+            const solid = (o: Entity) => ['block', 'push'].includes(classify(e, o).type);
+            if (!inBounds(s, e.pos) || occupantsAt(s, e.pos).some(solid)) {
                 return { state: s, events: [{ type: 'blocked', id: e.id, reason: inBounds(s, e.pos) ? 'blocked' : 'edge' }], followUps: [] };
             }
             const state = { ...s, entities: new Map(s.entities).set(e.id, e) };
@@ -123,8 +139,9 @@ function onDeath(_e: Entity): Effect[] {
     return [];
 }
 
-// a cascade step can leave two illegal things sharing a cell (e.g. a spawn landing on
-// an occupant); resolve those before the next step so invariants hold between phases
+// a cascade step can leave two things sharing a cell that have no business doing so;
+// resolve those before the next step so invariants hold between phases. Legitimate
+// sharing — a projectile resting over someone until it drifts on — is left alone.
 function detectOverlaps(s: GameState): Effect[] {
     const effects: Effect[] = [];
     for (const occupants of spatialIndex(s).values()) {
@@ -133,7 +150,7 @@ function detectOverlaps(s: GameState): Effect[] {
             for (let j = i + 1; j < occupants.length; j++) {
                 const a = occupants[i], b = occupants[j];
                 if (a.dead || b.dead) continue;
-                if (classify(a, b).type === 'pass') continue;
+                if (canShare(a, b)) continue;
                 effects.push({ kind: 'destroy', target: b.id, cause: a.id });
             }
         }

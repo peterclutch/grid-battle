@@ -1,8 +1,9 @@
-import { Character, DELTA, Dir, EntityId, GameState, TileEffect, Vec } from './types';
+import { Character, DELTA, Dir, Entity, GameState, TileEffect, Vec } from './types';
 import { Intend } from './intend';
 import { Effect } from './effect';
 import { GameEvent } from '../../../shared/model/event.model';
 import { commitMove, probeMove } from './movement';
+import { classify } from './interactions';
 import { inBounds, occupantsAt } from './grid';
 
 /** A square this action would touch, and what it would mean there. */
@@ -20,8 +21,54 @@ const slideLimit = (s: GameState) => s.width + s.height;
 
 const stepFrom = (from: Vec, dir: Dir): Vec => ({ x: from.x + DELTA[dir].x, y: from.y + DELTA[dir].y });
 
-const spawnable = (s: GameState, pos: Vec): boolean =>
-    inBounds(s, pos) && !occupantsAt(s, pos).some(o => o.tags.has('blocking'));
+/**
+ * What happens to something materialising on a square that is already occupied. This is
+ * the same `classify` a mover meets, so a fireball conjured onto someone behaves exactly
+ * like one that flew into them — it lands its blow and is spent.
+ *
+ * Refused when the square holds something the newcomer cannot affect, and when the
+ * newcomer would be spent without landing anything: a fireball conjured against a wall
+ * is a wasted turn, not a move the board should offer.
+ */
+function resolveArrival(s: GameState, entity: Entity): { ok: boolean; effects: Effect[] } {
+    const landing: Effect[] = []; // what the arrival does to the square, before it lands on it
+    let struck = false;
+    let spent = false;
+
+    for (const occupant of occupantsAt(s, entity.pos)) {
+        const it = classify(entity, occupant);
+        switch (it.type) {
+            case 'pass':
+                break;
+            case 'block':
+            case 'push':
+                return { ok: false, effects: [] };
+            case 'consume':
+                landing.push({ kind: 'destroy', target: occupant.id, cause: entity.id });
+                struck = true;
+                break;
+            case 'annihilate':
+                landing.push({ kind: 'destroy', target: occupant.id, cause: entity.id });
+                struck = true;
+                spent = true;
+                break;
+            case 'impact':
+                if (it.harms) {
+                    landing.push({ kind: 'damage', target: occupant.id, cause: entity.id });
+                    struck = true;
+                }
+                spent ||= it.stopMover;
+                break;
+        }
+    }
+
+    // the square is cleared first, so the newcomer never overlaps what it just displaced
+    const effects: Effect[] = [...landing, { kind: 'spawn', entity }];
+    if (spent) {
+        effects.push({ kind: 'destroy', target: entity.id });
+    }
+    return { ok: struck || !spent, effects };
+}
 
 /**
  * Compiles what an action wants into what the board will do.
@@ -60,9 +107,11 @@ export function resolve(state: GameState, actor: Character, intends: readonly In
             }
 
             case 'move': {
-                const slide = resolveSlide(state, actor, intend.dir, intend.distance);
-                if (!slide.path.length) {
-                    return { ok: false, reason: 'illegal' }; // could not budge at all
+                const slide = resolveSlide(state, actor, intend.dir, intend.distance, intend.knockbackOnStop === true);
+                // travelling less far than asked is a completed charge, not a failure;
+                // going nowhere and hitting nothing is not a turn at all
+                if (!slide.path.length && !slide.effects.length) {
+                    return { ok: false, reason: 'illegal' };
                 }
                 effects.push(...slide.effects);
                 // the squares crossed are 'passable'; only where you come to rest is 'movable'
@@ -70,25 +119,22 @@ export function resolve(state: GameState, actor: Character, intends: readonly In
                     pos,
                     effect: i === slide.path.length - 1 ? 'movable' : 'passable',
                 }));
-                // travelling less far than asked is a completed charge, not a failure —
-                // only the stop itself carries consequences
-                if (slide.stoppedBy) {
-                    if (intend.harmOnStop) {
-                        effects.push({ kind: 'damage', target: slide.stoppedBy, cause: actor.id });
-                    }
-                    if (intend.knockbackOnStop) {
-                        effects.push({ kind: 'move', target: slide.stoppedBy, dir: intend.dir, cause: actor.id });
-                    }
+                if (slide.struck && inBounds(state, slide.struck)) {
+                    footprint.push({ pos: slide.struck, effect: 'attackable' });
                 }
                 break;
             }
 
             case 'spawn': {
                 const { pos } = intend.entity;
-                if (!spawnable(state, pos)) {
-                    return { ok: false, reason: 'illegal' }; // nothing materialises off the board or inside something solid
+                if (!inBounds(state, pos)) {
+                    return { ok: false, reason: 'illegal' }; // nothing materialises off the board
                 }
-                effects.push({ kind: 'spawn', entity: intend.entity });
+                const arrival = resolveArrival(state, intend.entity);
+                if (!arrival.ok) {
+                    return { ok: false, reason: 'illegal' };
+                }
+                effects.push(...arrival.effects);
                 footprint.push({ pos, effect: 'spawnable' });
                 break;
             }
@@ -102,8 +148,8 @@ interface Slide {
     /** every square the mover passes through, in order; empty means it could not budge */
     readonly path: Vec[];
     readonly effects: Effect[];
-    /** what brought the movement to a halt, if anything did */
-    readonly stoppedBy?: EntityId;
+    /** the square of whatever the slide ran into, when the stop was a blow */
+    readonly struck?: Vec;
 }
 
 /**
@@ -112,7 +158,13 @@ interface Slide {
  * simulate rather than multiply out a distance — step three depends on where step two
  * left the crate.
  */
-function resolveSlide(state: GameState, actor: Character, dir: Dir, distance: number | 'max'): Slide {
+function resolveSlide(
+    state: GameState,
+    actor: Character,
+    dir: Dir,
+    distance: number | 'max',
+    knockback: boolean,
+): Slide {
     const limit = distance === 'max' ? slideLimit(state) : distance;
     const effects: Effect[] = [];
     const path: Vec[] = [];
@@ -121,14 +173,31 @@ function resolveSlide(state: GameState, actor: Character, dir: Dir, distance: nu
 
     for (let i = 0; i < limit; i++) {
         const probe = probeMove(sim, actor.id, dir);
-        if (!probe.ok) {
-            return { path, effects, stoppedBy: probe.by };
+        if (probe.ok) {
+            effects.push({ kind: 'move', target: actor.id, dir });
+            effects.push(...probe.effects); // collisions passed through on the way
+            sim = commitMove(sim, probe.chain, dir).state;
+            pos = stepFrom(pos, dir);
+            path.push(pos);
+            continue;
         }
-        effects.push({ kind: 'move', target: actor.id, dir });
-        effects.push(...probe.effects); // collisions passed through on the way
-        sim = commitMove(sim, probe.chain, dir).state;
-        pos = stepFrom(pos, dir);
-        path.push(pos);
+
+        // An ordinary slide just ends. The edge stops everyone the same way.
+        if (!knockback || !probe.by) {
+            return { path, effects };
+        }
+
+        // A shove ends by hitting what stopped it, one square only. The blow lands either
+        // way; the actor follows into the square only once the victim has cleared it, and
+        // a victim with nowhere to go is crushed by the cascade against whatever it hit.
+        const victim = sim.entities.get(probe.by)!;
+        effects.push({ kind: 'damage', target: victim.id, cause: actor.id });
+        effects.push({ kind: 'move', target: victim.id, dir, cause: actor.id });
+        if (probeMove(sim, victim.id, dir).ok) {
+            effects.push({ kind: 'move', target: actor.id, dir });
+            path.push(victim.pos);
+        }
+        return { path, effects, struck: victim.pos };
     }
 
     return { path, effects };

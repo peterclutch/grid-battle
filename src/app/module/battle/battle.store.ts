@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { Character, Entity, EntityId, entityId, findActiveCharacter, GameState, Tag } from './domain/types';
 import { tileEffectIndex } from './domain/preview';
-import { FireballAction, MoveAction, PunchAction, ShoveAction, StrikeAction } from './domain/action';
+import { FireballAction, MoveAction, PunchAction, ChargeAction, StrikeAction } from './domain/action';
 import { runTurn } from './domain/turn';
 import { Command } from '../../shared/model/command';
 
@@ -56,7 +56,7 @@ export class BattleStore {
                     tags: new Set<Tag>(['blocking', 'mortal']),
                     hp: 3,
                     team: 'blue',
-                    slots: [MoveAction, ShoveAction, MoveAction, FireballAction],
+                    slots: [MoveAction, ChargeAction, MoveAction, FireballAction],
                 },
             ],
             [

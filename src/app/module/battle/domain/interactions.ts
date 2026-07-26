@@ -5,6 +5,7 @@ export type Interaction =
     | { type: 'push' } // occupant is displaced, chain continues
     | { type: 'pass' } // mover walks over it
     | { type: 'consume' } // occupant dies, mover continues
+    | { type: 'annihilate' } // both are spent, and the mover never arrives
     | { type: 'impact'; harms: boolean; stopMover: boolean }; // harms: whether the occupant takes a hit
 
 interface Rule {
@@ -18,9 +19,23 @@ export const RULES: readonly Rule[] = [
         when: (m, o) => m.kind === 'projectile' && o.tags.has('mortal'),
         then: () => ({ type: 'impact', harms: true, stopMover: true }) },
 
-    { id: 'anything-crushes-projectile',
+    /**
+     * Two projectiles meeting are both spent, whether they land on the same square or
+     * cross paths swapping squares. Consuming one and letting the other through would
+     * make the outcome depend on which drifted first.
+     */
+    { id: 'projectiles-annihilate',
+        when: (m, o) => m.tags.has('ephemeral') && o.tags.has('ephemeral'),
+        then: () => ({ type: 'annihilate' }) },
+
+    /**
+     * A projectile only hurts whoever it flies into. Stepping onto the square one
+     * currently occupies is safe and leaves it intact — it is on its way out of that
+     * square anyway, so walking in is a dodge, not a collision.
+     */
+    { id: 'walk-through-projectile',
         when: (_, o) => o.tags.has('ephemeral'),
-        then: () => ({ type: 'consume' }) },
+        then: () => ({ type: 'pass' }) },
 
     { id: 'projectile-shatters-on-solid',
         when: (m, o) => m.kind === 'projectile' && o.tags.has('blocking'),
@@ -37,3 +52,12 @@ export const RULES: readonly Rule[] = [
 
 export const classify = (m: Entity, o: Entity): Interaction =>
     (RULES.find(r => r.when(m, o)) ?? { then: () => ({ type: 'pass' } as const) }).then(m, o);
+
+/**
+ * Whether two entities may sit on the same square. Sharing is the exception — a
+ * projectile mid-flight resting over someone for a turn — and one willing side is
+ * enough: the projectile would hit the character on arrival, but the character
+ * standing on it is not a collision anyone has to resolve.
+ */
+export const canShare = (a: Entity, b: Entity): boolean =>
+    classify(a, b).type === 'pass' || classify(b, a).type === 'pass';
