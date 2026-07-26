@@ -1,7 +1,7 @@
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
-import { Character, Entity, EntityId, entityId, findActiveCharacter, GameState, Tag } from './domain/types';
+import { Character, Entity, EntityId, entityId, findActiveCharacter, GameState, Tag, Vec } from './domain/types';
 import { tileEffectIndex } from './domain/preview';
-import { FireballAction, MoveAction, ChargeAction, StrikeAction } from './domain/action';
+import { ChargeAction, FireballAction, LungeAction, MoveAction, ShoveAction, StrikeAction } from './domain/action';
 import { runTurn } from './domain/turn';
 import { Command } from '../../shared/model/command';
 import { GameEvent } from '../../shared/model/event.model';
@@ -76,18 +76,38 @@ export class BattleStore {
         this.startTurnTimer();
     }
 
+    /**
+     * The pillars arena.
+     *
+     *     . . r . .
+     *     . # . # .
+     *     . . . . .
+     *     . . . . .
+     *     . # . # .
+     *     . . b . .
+     *
+     * Four rocks, placed to leave three clear columns and break every row a player starts
+     * on. A fireball down a lane is worth something because the lanes are the only way
+     * through, and the rocks are what a charge is for — the crush against them is the
+     * brawler's whole reason to close.
+     *
+     * Mirror-symmetric, so the opening is the same fight from either side.
+     */
     private initialState(): GameState {
+        const pillars: Vec[] = [{ x: 1, y: 1 }, { x: 3, y: 1 }, { x: 1, y: 4 }, { x: 3, y: 4 }];
+
         const entities = new Map<EntityId, Entity>([
             [
                 blueId,
                 {
                     id: blueId,
                     kind: 'character',
-                    pos: { x: 2, y: 4 },
+                    pos: { x: 2, y: 5 },
                     tags: new Set<Tag>(['blocking', 'mortal']),
                     hp: 3,
                     team: 'blue',
-                    slots: [MoveAction, ChargeAction, MoveAction, FireballAction],
+                    // the zoner: open a lane, keep it, and buy space back when it closes
+                    slots: [MoveAction, FireballAction, LungeAction, StrikeAction],
                 },
             ],
             [
@@ -95,14 +115,20 @@ export class BattleStore {
                 {
                     id: redId,
                     kind: 'character',
-                    pos: { x: 2, y: 1 },
+                    pos: { x: 2, y: 0 },
                     tags: new Set<Tag>(['blocking', 'mortal', 'damaging']),
                     hp: 3,
                     team: 'red',
-                    slots: [MoveAction, StrikeAction, MoveAction, FireballAction],
+                    // the brawler: close the distance, then put them into a rock
+                    slots: [MoveAction, ChargeAction, MoveAction, ShoveAction],
                 },
             ],
+            ...pillars.map((pos, index): [EntityId, Entity] => {
+                const id = entityId(`rock-${index}`);
+                return [id, { id, kind: 'object', pos, tags: new Set<Tag>(['blocking', 'immovable']) }];
+            }),
         ]);
+
         return {
             width: 5,
             height: 6,

@@ -59,6 +59,30 @@
   }
 }
 
+// Scenery fills more of its square than a character does — it reads as part of the board
+// rather than something standing on it.
+.rock,
+.crate,
+.glass {
+  width: 86%;
+  border-radius: 3px;
+}
+
+.rock {
+  background: linear-gradient(145deg, #6e7681, #484f58);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+}
+
+.crate {
+  background: linear-gradient(145deg, #d9a441, #a9701f);
+  box-shadow: inset 0 0 0 3px rgba(87, 55, 12, 0.55);
+}
+
+.glass {
+  background: rgba(129, 208, 226, 0.35);
+  box-shadow: inset 0 0 0 2px rgba(56, 139, 158, 0.75);
+}
+
 .projectile {
   width: 50%;
   aspect-ratio: 1;

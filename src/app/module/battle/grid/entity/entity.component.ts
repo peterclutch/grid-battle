@@ -1,5 +1,5 @@
 import { Component, computed, effect, ElementRef, inject, input, untracked } from '@angular/core';
-import { Entity } from '../../domain/types';
+import { Entity, Tag } from '../../domain/types';
 
 /**
  * A blow, in the only terms the board has to say it: recoil, then settle. Written as
@@ -43,6 +43,12 @@ export class EntityComponent {
         const e = this.entity();
         return e.kind === 'projectile' ? e.dir : null;
     });
+
+    /** Scenery looks like what it does, so the tag is what picks the token. */
+    isTerrain(tag: Tag): boolean {
+        const e = this.entity();
+        return e.kind === 'object' && e.tags.has(tag);
+    }
 
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 

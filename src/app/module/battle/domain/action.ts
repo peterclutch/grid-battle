@@ -169,5 +169,11 @@ export const MoveAction = dash('Move', 1);
 export const StrikeAction = strike('Strike', 2);
 export const FireballAction = projectile('Fireball', 'fireball', FIREBALL_TAGS);
 
+/** Two squares at once: the zoner's way of buying back the space a brawler just closed. */
+export const LungeAction = dash('Lunge', 2);
+
 /** Slide until something stops you, then hit it and shove it out of the way. */
 export const ChargeAction = dash('Charge', 'max', { knockbackOnStop: true, category: 'attack' });
+
+/** Short reach, but it moves the victim — worth most with a wall behind them. */
+export const ShoveAction = strike('Shove', 1, true);

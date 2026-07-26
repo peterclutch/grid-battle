@@ -5,5 +5,8 @@
         [class.active]="activeCharacter()"
         [class.enemy]="e.kind === 'character' && e.team === 'red'"
         [class.projectile]="e.kind === 'projectile'"
+        [class.rock]="isTerrain('immovable')"
+        [class.crate]="isTerrain('pushable')"
+        [class.glass]="isTerrain('fragile')"
         [attr.data-direction]="direction()"
 ></div>
