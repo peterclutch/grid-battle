@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { burst, PunchAction, strike, StrikeAction } from './action';
-import { alive, attempt, BLUE, east, hpOf, ids, play, RED, render, scene, tap } from './testing/board';
+import { strike, StrikeAction } from './action';
+import { alive, attempt, BLUE, east, hpOf, ids, play, RED, render, scene, skip } from './testing/board';
 
 const Shove = strike('Shove', 1, true);
-const Blast = burst('Blast', true);
 
 describe('striking a line', () => {
 
@@ -45,38 +44,18 @@ describe('striking a line', () => {
     });
 });
 
-describe('bursting at every neighbour', () => {
+describe('answering the wrong kind of command', () => {
 
-    it('hits all four at once', () => {
-        const after = play(scene(`
-            . o .
-            o b o
-            . o .
-        `, { blue: PunchAction }), tap);
-        expect(ids(after, 'crate').every(id => hpOf(after, id) === 2)).toBe(true);
-    });
-
-    it('hits whoever is standing there, friend or foe', () => {
-        const after = play(scene(`
-            . r .
-            . b .
-        `, { blue: PunchAction }), tap);
-        expect(hpOf(after, RED)).toBe(2);
-    });
-
-    it('refuses nothing — an empty board still costs the turn', () => {
-        const result = attempt(scene(`
-            . . .
-            . b .
-            . . .
-        `, { blue: PunchAction }), tap);
-        expect(result.ok).toBe(true);
-    });
-
-    it('will not answer a direction', () => {
-        const result = attempt(scene('. b .', { blue: PunchAction }), east);
+    it('is refused rather than guessed at', () => {
+        const result = attempt(scene('b . . .', { blue: StrikeAction }), skip);
         expect(result.ok).toBe(false);
         expect(result.ok === false && result.reason).toBe('wrong-input');
+    });
+
+    it('leaves the board untouched', () => {
+        const board = scene('b r . .', { blue: StrikeAction });
+        attempt(board, skip);
+        expect(hpOf(board, RED)).toBe(3);
     });
 });
 
@@ -88,21 +67,13 @@ describe('knockback on a hit', () => {
         expect(hpOf(after, RED)).toBe(2);
     });
 
-    it('radiates outward from a burst', () => {
-        const after = play(scene(`
-            . . . . .
-            . . o . .
-            . o b o .
-            . . o . .
-            . . . . .
-        `, { blue: Blast }), tap);
-        expect(render(after)).toBe([
-            '. . o . .',
-            '. . . . .',
-            'o . b . o',
-            '. . . . .',
-            '. . o . .',
-        ].join('\n'));
+    // Each square in the reach is knocked back in turn, and a knockback is an ordinary
+    // move — so the near crate shoves the far one along ahead of it, and the far one is
+    // then shoved again by the blow aimed at its own square. Two squares for the back of
+    // the line, one for the front.
+    it('shoves every victim in the line, and the far one twice over', () => {
+        const after = play(scene('b o o . .', { blue: strike('Sweep', 2, true) }), east);
+        expect(render(after)).toBe('b . o . o');
     });
 
     it('hits twice when the victim has nowhere to go', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ChargeAction, FireballAction, MoveAction, PunchAction, StrikeAction } from './action';
+import { ChargeAction, FireballAction, MoveAction, StrikeAction } from './action';
 import { highlights, scene } from './testing/board';
 
 const rows = (...lines: string[]) => lines.join('\n');
@@ -79,12 +79,12 @@ describe('what an attack offers', () => {
         expect(highlights(scene('. . b . .', { blue: StrikeAction }))).toBe('a a . a a');
     });
 
-    it('offers a burst on every neighbour at once', () => {
+    it('reaches in all four directions, clipped by the board', () => {
         expect(highlights(scene(rows(
             '. . .',
             '. b .',
             '. . .',
-        ), { blue: PunchAction }))).toBe(rows(
+        ), { blue: StrikeAction }))).toBe(rows(
             '. a .',
             'a . a',
             '. a .',

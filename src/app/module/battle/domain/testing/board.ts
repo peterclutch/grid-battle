@@ -161,7 +161,7 @@ export const north: Command = { kind: 'direction', direction: 'N' };
 export const south: Command = { kind: 'direction', direction: 'S' };
 export const east: Command = { kind: 'direction', direction: 'E' };
 export const west: Command = { kind: 'direction', direction: 'W' };
-export const tap: Command = { kind: 'tap' };
+export const skip: Command = { kind: 'skip' };
 
 /** Play the turns out, insisting each one is legal. */
 export function play(state: GameState, ...cmds: Command[]): GameState {
