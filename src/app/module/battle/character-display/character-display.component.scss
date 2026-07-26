@@ -2,24 +2,27 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: clamp(8px, 1.5vh, 18px);
+
+  &.placement-top {
+    flex-direction: column-reverse;
+  }
 }
 
 .slots {
+  --slot-gap: clamp(2px, 0.8vw, 4px);
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
-  width: min(90vw, 400px);
+  gap: var(--slot-gap);
+  width: min(100%, 400px);
 
   .next-indicator {
     position: absolute;
     z-index: 0;
     inset-block: 0;
     left: 0;
-
-    // Three gaps × 4px must be removed before dividing by four.
-    width: calc((100% - 12px) / 4);
+    width: calc((100% - 3 * var(--slot-gap)) / 4);
 
     box-sizing: border-box;
     border: 2px solid hsl(210, 19%, 48%);
@@ -44,11 +47,15 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
-    padding: 12px;
+    padding: clamp(6px, 1.6vw, 12px) clamp(2px, 1vw, 12px);
     border-radius: 4px;
+    text-align: center;
+    line-height: 1.2;
+    font-size: clamp(11px, 2.6vw, 14px);
+    overflow-wrap: anywhere;
 
     *:first-child {
-      font-size: 12px;
+      font-size: clamp(9px, 2vw, 12px);
     }
 
     &.next {
@@ -75,8 +82,10 @@
 
   .stats {
     background-color: hsla(213, 18%, 88%, 0.6);
-    padding: 12px;
+    padding: clamp(6px, 1.5vw, 12px) clamp(10px, 2vw, 12px);
     border-radius: 4px;
+    text-align: center;
+    font-size: clamp(12px, 2.8vw, 14px);
 
     .name {
       font-weight: 600;

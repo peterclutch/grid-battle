@@ -1,12 +1,18 @@
-//:host {
-//  display: grid;
-//  grid-template-columns: repeat(5, minmax(0, 1fr));
-//  gap: 4px;
-//  width: min(90vw, 600px);
-//}
+:host {
+  display: grid;
+  place-items: center;
+  container-type: size;
+  min-width: 0;
+  min-height: 0;
+}
 
 .grid {
-  --cell-size: min(calc(90vw / var(--grid-width)), calc(80vh / var(--grid-height)));
+  --cell-size: min(
+    calc((100cqw - 2px) / var(--grid-width)),
+    calc((100cqh - 2px) / var(--grid-height)),
+    6rem
+  );
+
   display: grid;
   width: fit-content;
   border: 1px solid #333;

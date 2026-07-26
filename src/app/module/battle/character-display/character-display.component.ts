@@ -8,6 +8,9 @@ import { activeSlotIndex } from '../domain/action';
     selector: 'nou-character-display',
     templateUrl: 'character-display.component.html',
     styleUrl: 'character-display.component.scss',
+    host: {
+        '[class.placement-top]': "placement() === 'top'",
+    },
     imports: [
         UpperCasePipe,
         HealthPipe
@@ -18,11 +21,12 @@ export class CharacterDisplayComponent {
     readonly character = input.required<Character>();
     readonly isTurn = input.required<boolean>();
     readonly turn = input.required<number>();
+    readonly placement = input<'top' | 'bottom'>('bottom');
 
     readonly nextSlotIndex = computed(() => activeSlotIndex(this.character().team, this.turn()));
     readonly nextSlotOffset = computed(() => {
         const position = this.nextSlotIndex();
-        return `calc(${position * 100}% + ${position * 4}px)`;
+        return `calc(${position * 100}% + ${position} * var(--slot-gap))`;
     });
 
     isNext(index: number): boolean {

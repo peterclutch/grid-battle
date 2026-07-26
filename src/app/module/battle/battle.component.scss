@@ -1,10 +1,17 @@
 :host {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
   min-height: 100dvh;
+  gap: clamp(0.5rem, 2vh, 1.5rem);
+  padding: clamp(0.5rem, 2vh, 1.5rem);
+}
+
+nou-character-display,
+nou-grid {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 //nou-countdown {

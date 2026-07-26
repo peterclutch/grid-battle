@@ -1,10 +1,12 @@
 <nou-character-display
+        placement="top"
         [character]="store.redPlayer()"
         [isTurn]="store.state().activeTeam === 'red'"
         [turn]="store.state().turn"
 />
 <nou-grid/>
 <nou-character-display
+        placement="bottom"
         [character]="store.bluePlayer()"
         [isTurn]="store.state().activeTeam === 'blue'"
         [turn]="store.state().turn"
