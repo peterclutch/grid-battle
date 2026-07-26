@@ -99,7 +99,8 @@ export function resolve(state: GameState, actor: Character, intends: readonly In
                 }
                 for (const victim of occupantsAt(state, intend.square)) {
                     effects.push({ kind: 'damage', target: victim.id, cause: actor.id });
-                    if (intend.knockback) {
+                    // same rule as a charge: nothing shoves what is immovable
+                    if (intend.knockback && !victim.tags.has('immovable')) {
                         effects.push({ kind: 'move', target: victim.id, dir: intend.knockback, cause: actor.id });
                     }
                 }
@@ -190,12 +191,15 @@ function resolveSlide(
         // A shove ends by hitting what stopped it, one square only. The blow lands either
         // way; the actor follows into the square only once the victim has cleared it, and
         // a victim with nowhere to go is crushed by the cascade against whatever it hit.
+        // Nothing shoves what is immovable: that is a wall you ran into, not a target.
         const victim = sim.entities.get(probe.by)!;
         effects.push({ kind: 'damage', target: victim.id, cause: actor.id });
-        effects.push({ kind: 'move', target: victim.id, dir, cause: actor.id });
-        if (probeMove(sim, victim.id, dir).ok) {
-            effects.push({ kind: 'move', target: actor.id, dir });
-            path.push(victim.pos);
+        if (!victim.tags.has('immovable')) {
+            effects.push({ kind: 'move', target: victim.id, dir, cause: actor.id });
+            if (probeMove(sim, victim.id, dir).ok) {
+                effects.push({ kind: 'move', target: actor.id, dir });
+                path.push(victim.pos);
+            }
         }
         return { path, effects, struck: victim.pos };
     }

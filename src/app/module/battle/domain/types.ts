@@ -16,6 +16,7 @@ export const DELTA: Record<Dir, Vec> = {
 
 export type Tag =
     | 'blocking'    // cannot be entered
+    | 'immovable'   // never displaced by anything, knockback included — a piece of the board
     | 'pushable'    // displaced by a mover
     | 'fragile'     // destroyed on impact
     | 'damaging'    // deals damage on contact

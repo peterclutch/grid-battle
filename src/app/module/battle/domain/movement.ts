@@ -9,7 +9,7 @@ export type MoveResult =
      * `by` is whatever the mover is left pressed against — the thing a charge would hit.
      * `crushed` is the far end of the chain, the one with the obstacle in its face.
      */
-    | { ok: false; reason: 'edge' | 'blocked' | 'cycle'; by?: EntityId; crushed?: EntityId }
+    | { ok: false; reason: 'edge' | 'blocked' | 'cycle' | 'immovable'; by?: EntityId; crushed?: EntityId }
     | { ok: true; chain: EntityId[]; effects: Effect[] };
 
 /** Once a chain has formed the mover is touching the first thing it picked up, not the
@@ -25,6 +25,11 @@ export function probeMove(s: GameState, moverId: EntityId, dir: Dir): MoveResult
     const d = DELTA[dir];
     const idx = spatialIndex(s);
     const mover = s.entities.get(moverId)!;
+
+    // the one refusal that needs no obstacle: some things are part of the board
+    if (mover.tags.has('immovable')) {
+        return { ok: false, reason: 'immovable' };
+    }
 
     const chain: EntityId[] = [moverId];
     const seen = new Set<EntityId>([moverId]);   // guards ring-shaped push cycles

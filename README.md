@@ -59,3 +59,22 @@ src/app/module/battle/
 ```
 
 `domain/` has no Angular dependency — the rules can be tested and replayed on their own.
+
+## Tests
+
+`npm test`. The specs live next to the rules they cover, one file per rule area rather
+than per source file: `movement`, `attack`, `spawn`, `drift`, `preview`.
+
+Boards are written as pictures via `domain/testing/board.ts`, and asserted the same way:
+
+```ts
+it('hits what stopped it, shoves it one square, and takes its place', () => {
+    const after = play(scene('b . r .', { blue: ChargeAction }), east);
+    expect(render(after)).toBe('. . b r');
+    expect(hpOf(after, RED)).toBe(2);
+});
+```
+
+`b`/`r` are the two characters, `#` immovable scenery, `o` a pushable crate, `x` glass,
+and `> < ^ v` a projectile in flight. `highlights()` renders the tile preview over the
+same grid, so a test can assert that what the UI offers is what the rules would do.

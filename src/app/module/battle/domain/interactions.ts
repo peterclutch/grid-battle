@@ -15,8 +15,10 @@ interface Rule {
 }
 
 export const RULES: readonly Rule[] = [
-    { id: 'projectile-hits-mortal',
-        when: (m, o) => m.kind === 'projectile' && o.tags.has('mortal'),
+    /** What a blow means is decided when it lands, so this only asks whether one is worth
+     *  landing — anything that has hit points, or that breaks. */
+    { id: 'projectile-hits-what-can-be-hurt',
+        when: (m, o) => m.kind === 'projectile' && (o.tags.has('mortal') || o.tags.has('fragile')),
         then: () => ({ type: 'impact', harms: true, stopMover: true }) },
 
     /**
@@ -50,8 +52,11 @@ export const RULES: readonly Rule[] = [
         then: () => ({ type: 'block' }) },
 ];
 
-export const classify = (m: Entity, o: Entity): Interaction =>
-    (RULES.find(r => r.when(m, o)) ?? { then: () => ({ type: 'pass' } as const) }).then(m, o);
+export const classify = (m: Entity, o: Entity): Interaction => {
+    const it = (RULES.find(r => r.when(m, o)) ?? { then: () => ({ type: 'pass' } as const) }).then(m, o);
+    // whatever a rule decided, an immovable thing is not going anywhere
+    return it.type === 'push' && o.tags.has('immovable') ? { type: 'block' } : it;
+};
 
 /**
  * Whether two entities may sit on the same square. Sharing is the exception — a
