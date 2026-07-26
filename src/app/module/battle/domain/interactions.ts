@@ -4,8 +4,8 @@ export type Interaction =
     | { type: 'block' } // move is illegal, nothing happens
     | { type: 'push' } // occupant is displaced, chain continues
     | { type: 'pass' } // mover walks over it
-    | { type: 'consume'; damage?: number } // occupant dies, mover continues
-    | { type: 'impact'; damage: number; stopMover: boolean };
+    | { type: 'consume' } // occupant dies, mover continues
+    | { type: 'impact'; harms: boolean; stopMover: boolean }; // harms: whether the occupant takes a hit
 
 interface Rule {
     readonly id: string;
@@ -16,7 +16,7 @@ interface Rule {
 export const RULES: readonly Rule[] = [
     { id: 'projectile-hits-mortal',
         when: (m, o) => m.kind === 'projectile' && o.tags.has('mortal'),
-        then: (m) => ({ type: 'impact', damage: (m.kind === 'projectile' ? m.power : undefined) ?? 1, stopMover: true }) },
+        then: () => ({ type: 'impact', harms: true, stopMover: true }) },
 
     { id: 'anything-crushes-projectile',
         when: (_, o) => o.tags.has('ephemeral'),
@@ -24,7 +24,7 @@ export const RULES: readonly Rule[] = [
 
     { id: 'projectile-shatters-on-solid',
         when: (m, o) => m.kind === 'projectile' && o.tags.has('blocking'),
-        then: () => ({ type: 'impact', damage: 0, stopMover: true }) },
+        then: () => ({ type: 'impact', harms: false, stopMover: true }) },
 
     { id: 'pushable',
         when: (_, o) => o.tags.has('pushable'),

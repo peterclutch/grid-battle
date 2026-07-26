@@ -1,12 +1,12 @@
 import { DELTA, Dir, EntityId, GameState } from './types';
 import { add, inBounds, key, spatialIndex } from './grid';
 import { classify } from './interactions';
-import { Intend } from './intend';
+import { Effect } from './effect';
 import { GameEvent } from '../../../shared/model/event.model';
 
 export type MoveResult =
     | { ok: false; reason: 'edge' | 'blocked' | 'cycle'; by?: EntityId }
-    | { ok: true; chain: EntityId[]; intends: Intend[] };
+    | { ok: true; chain: EntityId[]; effects: Effect[] };
 
 export function probeMove(s: GameState, moverId: EntityId, dir: Dir): MoveResult {
     const d = DELTA[dir];
@@ -15,7 +15,7 @@ export function probeMove(s: GameState, moverId: EntityId, dir: Dir): MoveResult
 
     const chain: EntityId[] = [moverId];
     const seen = new Set<EntityId>([moverId]);   // guards ring-shaped push cycles
-    const intends: Intend[] = [];
+    const effects: Effect[] = [];
     let cursor = add(mover.pos, d);
 
     for (;;) {
@@ -32,12 +32,12 @@ export function probeMove(s: GameState, moverId: EntityId, dir: Dir): MoveResult
                 case 'block':
                     return { ok: false, reason: 'blocked', by: other.id };
                 case 'consume':
-                    intends.push({ kind: 'destroy', target: other.id, cause: moverId });
+                    effects.push({ kind: 'destroy', target: other.id, cause: moverId });
                     break;
                 case 'impact':
-                    if (it.damage) intends.push({ kind: 'damage', target: other.id, amount: it.damage, cause: moverId });
-                    if (it.stopMover) intends.push({ kind: 'destroy', target: moverId, cause: other.id });
-                    return { ok: true, chain: [], intends: intends };          // mover never occupies the cell
+                    if (it.harms) effects.push({ kind: 'damage', target: other.id, cause: moverId });
+                    if (it.stopMover) effects.push({ kind: 'destroy', target: moverId, cause: other.id });
+                    return { ok: true, chain: [], effects };          // mover never occupies the cell
                 case 'push':
                     if (seen.has(other.id)) return { ok: false, reason: 'cycle' };
                     seen.add(other.id);
@@ -47,7 +47,7 @@ export function probeMove(s: GameState, moverId: EntityId, dir: Dir): MoveResult
             }
         }
 
-        if (!mustContinue) return { ok: true, chain, intends: intends };
+        if (!mustContinue) return { ok: true, chain, effects };
         cursor = add(cursor, d);
     }
 }

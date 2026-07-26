@@ -1,51 +1,75 @@
-import { findActiveCharacter, GameState } from './types';
-import { Intend, runCascade } from './intend';
+import { entityId, EntityId, findActiveCharacter, GameState } from './types';
+import { Effect, runCascade } from './effect';
+import { resolve } from './resolve';
 import { GameEvent } from '../../../shared/model/event.model';
 import { Command } from '../../../shared/model/command';
-import { findActiveAction } from './action';
+import { ActionContext, actionIntends, findActiveAction } from './action';
 
-export function runTurn(currentState: GameState, cmd: Command): { state: GameState; log: GameEvent[] } {
-    const log: GameEvent[] = [];
-    let state = currentState;
+export type TurnRejection =
+    | 'no-actor'      // active team has no character on the board
+    | 'no-action'     // the active slot is empty
+    | 'wrong-input'   // the command does not match the armed action
+    | 'illegal';      // the action asked for something the board will not allow
 
-    const step = (intends: Intend[], label: string) => {
-        if (!intends.length) {
-            return;
-        }
-        log.push({ type: 'phase', label });
-        const r = runCascade(state, intends);
-        state = r.state; log.push(...r.log);
-    };
+export type TurnResult =
+    | { ok: true; state: GameState; log: GameEvent[] }
+    | { ok: false; reason: TurnRejection };
 
-    step(commandToIntends(state, cmd), 'action');
-    // step(orderedBy(actorsWithTag(state, 'ephemeral'))  // projectiles, stable id order
-    //     .map(p => ({ kind: 'move', target: p.id, dir: p.facing! } as Effect)), 'projectiles');
-    // step(petsOf(state).map(p => petIntent(state, p)),'pets');
-    // step(upkeepEffects(state), 'upkeep');
+export function runTurn(currentState: GameState, cmd: Command): TurnResult {
+    const actor = findActiveCharacter(currentState);
+    if (!actor) {
+        return { ok: false, reason: 'no-actor' };
+    }
+
+    const action = findActiveAction(currentState);
+    if (!action) {
+        return { ok: false, reason: 'no-action' };
+    }
+
+    const ctx: ActionContext = { state: currentState, actor, nextId: idSource(currentState) };
+    const intends = actionIntends(action, ctx, cmd);
+    if (!intends.length) {
+        return { ok: false, reason: 'wrong-input' };
+    }
+
+    // compile intent into concrete effects; this is where the turn can still be refused
+    const resolved = resolve(currentState, actor, intends);
+    if (!resolved.ok) {
+        return { ok: false, reason: 'illegal' };
+    }
+
+    const log: GameEvent[] = [...resolved.log];
+    const acted = runCascade(currentState, resolved.effects);
+    log.push(...acted.log);
+    let state = acted.state;
+
+    // Projectiles are chosen from currentState, so ones spawned this turn stay put.
+    // These are already effects — nobody intended them, they just happen.
+    const drifting = moveProjectiles(currentState);
+    if (drifting.length) {
+        const drifted = runCascade(state, drifting);
+        state = drifted.state;
+        log.push(...drifted.log);
+    }
 
     return {
+        ok: true,
         state: { ...state, turn: state.turn + 1, activeTeam: state.activeTeam === 'blue' ? 'red' : 'blue' },
         log,
     };
 }
 
-function commandToIntends(state: GameState, cmd: Command): Intend[] {
-    const character = findActiveCharacter(state);
-    if (!character) {
-        return [];
-    }
-    const action = findActiveAction(state);
-    if (!action) {
-        return [];
-    }
-    switch (action.kind) {
-        case 'move':
-            return [{ kind: 'move', target: character.id, dir: cmd.kind === 'direction' ? cmd.direction : 'N' }]; // todo better action logic
-        case 'attack':
-            return []
-        case 'defense':
-            return []
-        case 'spawn':
-            return []
-    }
+/**
+ * Deterministic ids, derived from the turn plus a per-turn sequence number.
+ * Replays and lockstep clients producing the same intends produce the same ids.
+ */
+function idSource(state: GameState): (prefix: string) => EntityId {
+    let seq = 0;
+    return prefix => entityId(`${prefix}-t${state.turn}-${seq++}`);
+}
+
+function moveProjectiles(state: GameState): Effect[] {
+    return [...state.entities.values()]
+        .filter(e => e.kind === 'projectile')
+        .map(e => ({ kind: 'move', target: e.id, dir: e.dir }));
 }

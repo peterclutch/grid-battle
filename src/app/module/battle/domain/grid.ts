@@ -1,6 +1,6 @@
-import { Character, DELTA, Dir, Entity, findActiveCharacter, GameState, Vec } from './types';
-import { Action, findActiveAction } from './action';
-import { probeMove } from './movement';
+import { Entity, GameState, Vec } from './types';
+
+export type { TileEffect } from './types';
 
 export const key = (p: Vec) => `${p.x},${p.y}`;
 export const add = (a: Vec, d: Vec): Vec => ({ x: a.x + d.x, y: a.y + d.y });
@@ -10,6 +10,9 @@ export const inBounds = (state: GameState, position: Vec): boolean =>
     position.x < state.width &&
     position.y < state.height;
 
+export const occupantsAt = (s: GameState, p: Vec): Entity[] =>
+    [...s.entities.values()].filter(e => !e.dead && e.pos.x === p.x && e.pos.y === p.y);
+
 export function spatialIndex(s: GameState): ReadonlyMap<string, Entity[]> {
     const idx = new Map<string, Entity[]>();
     for (const e of s.entities.values()) {
@@ -18,42 +21,5 @@ export function spatialIndex(s: GameState): ReadonlyMap<string, Entity[]> {
     return idx;
 }
 
-export type TileEffect =
-    | 'movable' // move to tile
-    | 'passable' // move through tile
-    | 'attackable' // attack tile
-    | 'spawnable' // spawn entity on tile
-    | 'projectile-path'; // projectile moves to tile at the end of turn
-
-export function tileEffectIndex(s: GameState): ReadonlyMap<string, TileEffect> {
-    const idx = new Map<string, TileEffect>();
-    const character = findActiveCharacter(s);
-    const action = findActiveAction(s);
-    if (!action) {
-        return idx;
-    }
-    const occupants = spatialIndex(s);
-    for (const [dir, delta] of Object.entries(DELTA) as [Dir, Vec][]) {
-        const position = add(character.pos, delta);
-        if (!inBounds(s, position)) {
-            continue;
-        }
-        const effect = getTileEffect(action, s, character, dir, occupants.get(key(position)) ?? []);
-        if (effect) {
-            idx.set(key(position), effect);
-        }
-    }
-    return idx;
-}
-
-function getTileEffect(action: Action, s: GameState, mover: Character, dir: Dir, occupants: Entity[]): TileEffect | null {
-    switch (action.kind) {
-        case 'move':
-            return probeMove(s, mover.id, dir).ok ? 'movable' : null;
-        case 'attack':
-            return occupants.some(o => o.tags.has('mortal')) ? 'attackable' : null;
-        case 'spawn':
-            return occupants.some(o => o.tags.has('blocking')) ? null : 'spawnable';
-    }
-    return null;
-}
+// tile highlights live in preview.ts — they are derived from what an action resolves to,
+// not from anything spatial

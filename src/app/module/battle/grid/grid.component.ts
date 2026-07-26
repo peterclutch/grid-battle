@@ -1,8 +1,8 @@
-import { Component, computed, input } from '@angular/core';
-import { Entity } from '../domain/types';
+import { Component, computed, inject } from '@angular/core';
 import { TileComponent } from './tile/tile.component';
-import { EntityComponent } from './entity-token/entity.component';
+import { EntityComponent } from './entity/entity.component';
 import { TileEffect } from '../domain/grid';
+import { BattleStore } from '../battle.store';
 
 @Component({
     selector: 'nou-grid',
@@ -15,20 +15,17 @@ import { TileEffect } from '../domain/grid';
 })
 export class GridComponent {
 
-    readonly height = input.required<number>();
-    readonly width = input.required<number>();
-    readonly entities = input.required<readonly Entity[]>();
-    readonly tileEffects = input.required<ReadonlyMap<string, TileEffect>>();
+    readonly store = inject(BattleStore);
 
     readonly cells = computed(() => {
-        return Array.from({ length: this.width() * this.height() }, (_, index) => ({
+        return Array.from({ length: this.store.state().width * this.store.state().height }, (_, index) => ({
             index,
-            x: index % this.width(),
-            y: Math.floor(index / this.width()),
+            x: index % this.store.state().width,
+            y: Math.floor(index / this.store.state().width),
         }));
     });
 
     tileEffectAt(x: number, y: number): TileEffect | null {
-        return this.tileEffects().get(`${x},${y}`) ?? null;
+        return this.store.tileEffectIndex().get(`${x},${y}`) ?? null;
     }
 }

@@ -1,16 +1,16 @@
 <div
         class="grid"
-        [style.--grid-width]="width()"
-        [style.--grid-height]="height()"
-        [style.grid-template-columns]="'repeat(' + width() + ', var(--cell-size))'"
-        [style.grid-template-rows]="'repeat(' + height() + ', var(--cell-size))'"
+        [style.--grid-width]="store.state().width"
+        [style.--grid-height]="store.state().height"
+        [style.grid-template-columns]="'repeat(' + store.state().width + ', var(--cell-size))'"
+        [style.grid-template-rows]="'repeat(' + store.state().height + ', var(--cell-size))'"
 >
     @for (cell of cells(); track cell.index) {
         <nou-tile [effect]="tileEffectAt(cell.x, cell.y)" />
     }
     <div class="entities">
-        @for (entity of entities(); track entity.id) {
-            <nou-entity-token [entity]="entity" />
+        @for (entity of store.entities(); track entity.id) {
+            <nou-entity-token [activeCharacter]="store.activeCharacter().id === entity.id" [entity]="entity" />
         }
     </div>
 </div>

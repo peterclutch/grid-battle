@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { Character, Entity, EntityId, entityId, findActiveCharacter, GameState, Tag } from './domain/types';
-import { tileEffectIndex } from './domain/grid';
-import { FireballAction, MoveAction, PunchAction } from './domain/action';
+import { tileEffectIndex } from './domain/preview';
+import { FireballAction, MoveAction, PunchAction, ShoveAction, StrikeAction } from './domain/action';
 import { runTurn } from './domain/turn';
 import { Command } from '../../shared/model/command';
 
@@ -37,8 +37,12 @@ export class BattleStore {
     );
 
     dispatch(cmd: Command): void {
-        const { state, log } = runTurn(this._state(), cmd);
-        this._state.set(state);
+        const result = runTurn(this._state(), cmd);
+        if (!result.ok) {
+            return;
+        }
+        this._state.set(result.state);
+        // todo handle log
     }
 
     private initialState(): GameState {
@@ -52,7 +56,7 @@ export class BattleStore {
                     tags: new Set<Tag>(['blocking', 'mortal']),
                     hp: 3,
                     team: 'blue',
-                    slots: [MoveAction, PunchAction, MoveAction, FireballAction],
+                    slots: [MoveAction, ShoveAction, MoveAction, FireballAction],
                 },
             ],
             [
@@ -60,11 +64,11 @@ export class BattleStore {
                 {
                     id: redId,
                     kind: 'character',
-                    pos: { x: 1, y: 1 },
+                    pos: { x: 2, y: 1 },
                     tags: new Set<Tag>(['blocking', 'mortal', 'damaging']),
                     hp: 3,
                     team: 'red',
-                    slots: [MoveAction, PunchAction, MoveAction, FireballAction],
+                    slots: [MoveAction, StrikeAction, MoveAction, FireballAction],
                 },
             ],
         ]);

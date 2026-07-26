@@ -3,12 +3,7 @@
         [isTurn]="store.state().activeTeam === 'red'"
         [turn]="store.state().turn"
 />
-<nou-grid
-        [width]="store.state().width"
-        [height]="store.state().height"
-        [entities]="store.entities()"
-        [tileEffects]="store.tileEffectIndex()"
-/>
+<nou-grid/>
 <nou-character-display
         [character]="store.bluePlayer()"
         [isTurn]="store.state().activeTeam === 'blue'"

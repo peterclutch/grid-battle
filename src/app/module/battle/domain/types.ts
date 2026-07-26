@@ -37,13 +37,19 @@ export interface EntityBase {
 
 export interface Projectile extends EntityBase {
     readonly kind: 'projectile';
-    readonly direction: Dir;
-    readonly power?: number; // damage dealt on impact, defaults to 1
+    readonly dir: Dir;
 }
 
 export interface Object extends EntityBase {
     readonly kind: 'object';
 }
+
+export type TileEffect =
+    | 'movable'          // move to tile
+    | 'passable'         // move through tile
+    | 'attackable'       // attack tile
+    | 'spawnable'        // spawn entity on tile
+    | 'projectile-path'; // projectile moves to tile at the end of turn
 
 export type Slots = readonly [Action | null, Action | null, Action | null, Action | null];
 

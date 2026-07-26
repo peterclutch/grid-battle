@@ -2,6 +2,7 @@
 <div
         class="token"
         [class.player]="e.kind === 'character' && e.team === 'blue'"
+        [class.active]="activeCharacter()"
         [class.enemy]="e.kind === 'character' && e.team === 'red'"
         [class.projectile]="e.kind === 'projectile'"
         [attr.data-direction]="direction()"

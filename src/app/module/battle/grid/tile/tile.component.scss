@@ -5,15 +5,79 @@
   aspect-ratio: 1;
   box-sizing: border-box;
   background: #eaeaea;
+  // anchors the effect overlay
+  position: relative;
 
   &:nth-child(odd) {
     background: #dadada;
   }
 
+  // Effects are painted as a translucent layer on top of the tile rather than as a
+  // replacement background, so the checkerboard still reads through them. Each modifier
+  // only supplies colours and a tempo; the overlay itself is defined once below.
   &.effect {
     &--movable {
-      background: #ddf4ff;
-      border: 2px dotted #0969da;
+      --effect-tint: rgba(9, 105, 218, 0.20);
+      --effect-line: rgba(9, 105, 218, 0.85);
+      --effect-pulse: 500ms;
     }
+
+    &--passable {
+      --effect-tint: rgba(9, 105, 218, 0.10);
+      --effect-line: transparent;
+      --effect-pulse: 0;
+    }
+
+    &--attackable {
+      --effect-tint: rgba(209, 36, 47, 0.20);
+      --effect-line: rgba(209, 36, 47, 0.85);
+      --effect-pulse: 500ms;
+    }
+
+    &--projectile-path {
+      --effect-tint: rgba(209, 36, 47, 0.14);
+      --effect-line: rgba(209, 36, 47, 0.6);
+      --effect-style: dashed;
+      --effect-pulse: 0;
+    }
+
+    &--spawnable {
+      --effect-tint: hsl(272 65% 51% / 0.18);
+      --effect-line: hsl(272 65% 51% / 0.85);
+      --effect-pulse: 500ms;
+    }
+
+    &--movable,
+    &--passable,
+    &--attackable,
+    &--projectile-path,
+    &--spawnable {
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        box-sizing: border-box;
+        pointer-events: none;
+        background: var(--effect-tint);
+        border: 2px dashed var(--effect-line);
+        animation: tile-pulse var(--effect-pulse, 1.5s) ease-in-out infinite;
+      }
+    }
+  }
+}
+
+@keyframes tile-pulse {
+  0%, 100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host([class*='effect--'])::before {
+    animation: none;
+    opacity: 1;
   }
 }

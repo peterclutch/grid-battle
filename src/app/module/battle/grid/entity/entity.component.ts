@@ -13,10 +13,11 @@ import { Entity } from '../../domain/types';
 export class EntityComponent {
 
     readonly entity = input.required<Entity>();
+    readonly activeCharacter = input.required<boolean>();
 
-    protected readonly direction = computed(() => {
+    readonly direction = computed(() => {
         const e = this.entity();
-        return e.kind === 'projectile' ? e.direction : null;
+        return e.kind === 'projectile' ? e.dir : null;
     });
 
 }
